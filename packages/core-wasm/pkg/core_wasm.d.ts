@@ -1,10 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * JSからのエラーメッセージをラップするためのコンバータ
- */
-export function error_to_js_value(error: any): string;
-/**
  * YAML文字列をパースしてJSON文字列に変換する
  *
  * # 引数
@@ -53,3 +49,7 @@ export function apply_patch(yaml_str: string, patch_str: string): string;
  * バージョン情報を取得する
  */
 export function version(): string;
+/**
+ * JSからのエラーメッセージをラップするためのコンバータ
+ */
+export function error_to_js_value(error: any): string;

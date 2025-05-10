@@ -1,12 +1,58 @@
 use serde_json::{Value, json};
 use crate::error::{ErrorInfo, ValidationResult};
 
+use jsonschema_valid::schemas::Draft;
+use jsonschema_valid::Config;
+
 /// YAMLをバリデーションして結果をJSON文字列で返す
-/// ※現状はYAML構文チェックのみ（JSON Schemaバリデーションなしのダミー実装）
-pub fn validate_yaml(yaml_str: &str, _schema_str: &str) -> String {
-    match serde_yaml::from_str::<Value>(yaml_str) {
+pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
+    // YAMLをパース
+    let yaml_value: Value = match serde_yaml::from_str(yaml_str) {
+        Ok(v) => v,
+        Err(e) => {
+            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json();
+        }
+    };
+
+    // スキーマをパース
+    let schema_value: Value = match serde_yaml::from_str(schema_str) {
+        Ok(v) => v,
+        Err(e) => {
+            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json();
+        }
+    };
+
+    // スキーマをコンパイル
+    let compiled = match Config::from_schema(&schema_value, Some(Draft::Draft7)) {
+        Ok(c) => c,
+        Err(e) => {
+            return ValidationResult::error(vec![ErrorInfo::new(0, format!("Schema compile error: {}", e), "")]).to_json();
+        }
+    };
+
+    // バリデーション実行
+    let result = compiled.validate(&yaml_value);
+
+    match result {
         Ok(_) => ValidationResult::success().to_json(),
-        Err(e) => ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json(),
+        Err(errors) => {
+            let errors: Vec<ErrorInfo> = errors
+                .map(|err| {
+                    let path = if !err.instance_path.is_empty() {
+                        format!("/{}", err.instance_path.join("/"))
+                    } else {
+                        "".to_string()
+                    };
+                    let line = find_line_for_path(yaml_str, path.clone());
+                    ErrorInfo {
+                        line,
+                        message: err.to_string(),
+                        path,
+                    }
+                })
+                .collect();
+            ValidationResult::error(errors).to_json()
+        }
     }
 }
 
