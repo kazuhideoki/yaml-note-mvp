@@ -1,13 +1,6 @@
-# YAMLノートシステムMVP作成
+# YAML-Only Note App – MVP **設計書**
 
-## Meta
-
-[[2025-05-10]]
-#yaml #note #system #mvp
-
-## YAML-Only Note App – MVP **設計書**
-
-### 1. MVP の目的（確定）
+## 1. MVP の目的（確定）
 
 ```yaml
 - id: 1
@@ -18,7 +11,7 @@
   description: "操作イベントを JSONL & PostHog へ送出し、後続フェーズで UX を数値化できる基盤を整える。"
 ```
 
-### 2. 採用技術 & 役割
+## 2. 採用技術 & 役割
 
 ```yaml
 ui:
@@ -42,7 +35,7 @@ future_plan:
     notes: "ネイティブへ移行し、FS 操作・マルチスレッド最適化を図る"
 ```
 
-### 3. リポジトリ構成 (monorepo)
+## 3. リポジトリ構成 (monorepo)
 
 ```text
 yaml-note-mvp/
@@ -70,7 +63,7 @@ yaml-note-mvp/
 └─ package.json
 ```
 
-### 4. モジュール責務
+## 4. モジュール責務
 
 ```yaml
 modules:
@@ -108,7 +101,7 @@ dataflow:
     description: "logger が操作イベントを JSONL/PostHog へ送出"
 ```
 
-### 5. MVP 実装ロードマップ（0〜5）
+## 5. MVP 実装ロードマップ（0〜5）
 
 ```yaml
 roadmap:
