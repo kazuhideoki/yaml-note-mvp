@@ -14,6 +14,21 @@ interface YamlEditorProps {
   }>;
 }
 
+/**
+ * YAMLエディタコンポーネント
+ * 
+ * @component
+ * @param {YamlEditorProps} props - エディタのプロパティ
+ * @param {string} props.value - 表示・編集するYAML文字列
+ * @param {(value: string) => void} props.onChange - YAML内容が変更されたときに呼ばれるコールバック
+ * @param {string} [props.className] - 追加のCSSクラス
+ * @param {React.Ref<{ setCursor: (line: number) => void }>} [props.editorRef] - 外部からカーソル操作等を行うためのref
+ * @returns {JSX.Element}
+ * 
+ * @description
+ * CodeMirrorを利用したYAML専用エディタ。編集内容の変更検知、カーソル移動ログ、初期化ログなどUX計測も行う。
+ * WASMバリデーションや他コンポーネントとの連携を想定。
+ */
 export const YamlEditor: React.FC<YamlEditorProps> = forwardRef(({
   value,
   onChange,

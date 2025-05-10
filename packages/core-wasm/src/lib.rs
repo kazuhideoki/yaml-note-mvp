@@ -1,3 +1,18 @@
+//! # core-wasm
+//!
+//! YAML Note MVP アプリケーションのコアロジックを提供するクレート。
+//! 主にYAML文字列のパース、JSON Schemaを用いたバリデーション機能を
+//! WebAssembly経由でJavaScript環境に公開する。
+//!
+//! ## 主な公開API
+//! - `parse_yaml`: YAML→JSON変換
+//! - `validate_yaml`: YAML+スキーマのバリデーション
+//! - `stringify_yaml`: JSON→YAML変換
+//!
+//! ## 内部モジュール
+//! - `error`: エラー型とバリデーション結果
+//! - `validate`: バリデーションロジック
+
 use serde_json::Value;
 use wasm_bindgen::prelude::*;
 
@@ -8,12 +23,30 @@ pub use error::{CoreError, ErrorInfo, ValidationResult};
 
 /// YAML文字列をパースしてJSON文字列に変換する
 ///
+/// # 概要
+/// YAML形式の文字列を受け取り、serde_yamlでパース後、serde_jsonでJSON文字列に変換します。
+/// 変換に失敗した場合は、エラー情報を含むJSON文字列を返します。
+///
 /// # 引数
 /// * `yaml_str` - YAML形式の文字列
 ///
 /// # 戻り値
 /// * 成功時: JSONとしてパースされたYAMLデータの文字列
 /// * 失敗時: エラー情報を含むJSON文字列
+///
+/// # 例
+/// ```
+/// let yaml = "title: Hello\ncontent: World";
+/// let json = parse_yaml(yaml);
+/// // => "{\"title\":\"Hello\",\"content\":\"World\"}"
+/// ```
+///
+/// # WASMバインディング
+/// JavaScriptからは `coreWasm.parse_yaml(yamlStr)` のように呼び出せます。
+///
+/// # エラー
+/// - YAMLパースエラー時: エラー内容を含むJSON文字列
+/// - JSONシリアライズエラー時: エラー内容を含むJSON文字列
 #[wasm_bindgen]
 pub fn parse_yaml(yaml_str: &str) -> String {
     match serde_yaml::from_str::<Value>(yaml_str) {

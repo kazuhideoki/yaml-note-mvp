@@ -8,6 +8,20 @@ interface ErrorBadgeProps {
   className?: string;
 }
 
+/**
+ * バリデーションエラーをバッジ形式で表示するコンポーネント
+ *
+ * @component
+ * @param {ErrorBadgeProps} props - エラー情報とクリックハンドラ等
+ * @param {ValidationError[]} props.errors - 表示するバリデーションエラー配列
+ * @param {(line: number) => void} [props.onClick] - エラー行クリック時のコールバック
+ * @param {string} [props.className] - 追加のCSSクラス
+ * @returns {JSX.Element | null}
+ *
+ * @description
+ * エラーが存在する場合のみバッジを表示し、クリックで該当行にジャンプ等のアクションが可能。
+ * エラー表示時にはUXログも記録する。
+ */
 export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   errors,
   onClick,

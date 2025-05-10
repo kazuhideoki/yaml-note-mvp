@@ -3,6 +3,12 @@ use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
 /// コアモジュールのエラー型
+///
+/// # 概要
+/// YAML Note MVPコアWASMロジックで発生しうる主要なエラー種別を網羅します。
+/// - YAML/JSONパースエラー
+/// - スキーマエラー
+/// - バリデーションエラー
 #[derive(Error, Debug)]
 pub enum CoreError {
     #[error("YAML parse error: {0}")]
@@ -19,6 +25,12 @@ pub enum CoreError {
 }
 
 /// フロントエンドに返すエラー情報
+/// バリデーションやパース時のエラー情報
+///
+/// # フィールド
+/// - `line`: エラー発生行番号（0の場合は特定不可）
+/// - `message`: エラーメッセージ
+/// - `path`: エラー発生箇所のパス（YAML/JSON Pointer等）
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorInfo {
     pub line: u32,
@@ -27,6 +39,7 @@ pub struct ErrorInfo {
 }
 
 impl ErrorInfo {
+    /// 新しいErrorInfoを生成
     pub fn new(line: u32, message: impl Into<String>, path: impl Into<String>) -> Self {
         Self {
             line,
@@ -35,21 +48,26 @@ impl ErrorInfo {
         }
     }
 
+    /// serde_yaml::ErrorからErrorInfoを生成
     pub fn from_yaml_error(error: &serde_yaml::Error) -> Self {
         let line = match error.location() {
             Some(location) => location.line() as u32,
             None => 0,
         };
-
         Self {
             line,
-            message: format!("YAML parse error: {}", error),
+            message: error.to_string(),
             path: "".to_string(),
         }
     }
 }
 
 /// フロントエンドに返す結果型
+/// バリデーションの結果を表す構造体
+///
+/// # フィールド
+/// - `success`: バリデーション成功時はtrue
+/// - `errors`: エラー情報の配列（成功時は空配列）
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValidationResult {
     pub success: bool,

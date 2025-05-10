@@ -15,6 +15,13 @@ let CoreWasm: CoreWasmType;
 import { debounce } from 'lodash-es';
 
 // バリデーション結果の型定義
+/**
+ * バリデーションエラー情報
+ *
+ * @property {number} line - エラー発生行番号（0の場合は特定不可）
+ * @property {string} message - エラーメッセージ
+ * @property {string} path - エラー発生箇所のパス（YAML/JSON Pointer等）
+ */
 export interface ValidationError {
   line: number;
   message: string;
@@ -29,6 +36,20 @@ export interface ValidationResult {
 // スキーマパスとその内容のマッピング
 const schemaCache = new Map<string, string>();
 
+/**
+ * YAMLバリデーション用カスタムフック
+ *
+ * @description
+ * WASMコアモジュールと連携し、YAML文字列とスキーマをリアルタイムでバリデーションする。
+ * バリデーション結果（成功/失敗・エラーリスト）や初期化状態を管理し、エディタやUIに提供する。
+ * スキーマ・YAML内容のキャッシュや、WASM初期化状態も内部で管理。
+ *
+ * @returns {{
+ *   isInitialized: boolean;
+ *   validationResult: ValidationResult;
+ *   // ...他の返却値
+ * }}
+ */
 export function useYaml() {
   // WASM初期化状態
   const [isInitialized, setIsInitialized] = useState(false);

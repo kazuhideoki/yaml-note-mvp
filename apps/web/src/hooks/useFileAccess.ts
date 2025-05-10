@@ -12,6 +12,21 @@ interface SaveOptions {
   startIn?: any; // Handle for file system API
 }
 
+/**
+ * ファイルアクセス用カスタムフック
+ *
+ * @description
+ * File System Access APIを利用し、YAMLファイルの読み書き・保存・ファイル名管理などを提供する。
+ * ブラウザのサポート状況も管理し、未サポート時は警告を表示する。
+ *
+ * @returns {{
+ *   fileName: string | null;
+ *   openFile: () => Promise<FileInfo | null>;
+ *   saveFile: (content: string, options?: SaveOptions) => Promise<void>;
+ *   isSupported: boolean;
+ *   // ...他の返却値
+ * }}
+ */
 export function useFileAccess() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileHandle, setFileHandle] = useState<any>(null);

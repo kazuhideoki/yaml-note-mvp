@@ -2,9 +2,24 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 // ログレベルの定義
+/**
+ * ログレベルの型定義
+ * - debug: デバッグ情報
+ * - info: 通常の操作・情報
+ * - warn: 警告
+ * - error: エラー
+ */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 // ログイベント構造の定義
+/**
+ * ログイベント構造の定義
+ * @property {number} timestamp - イベント発生時刻（UNIXエポックms）
+ * @property {LogLevel} level - ログレベル
+ * @property {string} action - アクション名
+ * @property {Record<string, any>} [details] - 追加情報
+ * @property {string} sessionId - セッションID
+ */
 export interface LogEvent {
   timestamp: number;
   level: LogLevel;
@@ -14,6 +29,14 @@ export interface LogEvent {
 }
 
 // ロガーコンテキストの型定義
+/**
+ * LoggerContextで提供される関数・状態の型
+ * @property {(level, action, details?) => void} log - ログ記録関数
+ * @property {LogEvent[]} events - 現在のログイベント配列
+ * @property {() => void} clearEvents - ログのクリア
+ * @property {string} sessionId - セッションID
+ * @property {() => string} exportLogs - ログのエクスポート（JSON文字列）
+ */
 export interface LoggerContextType {
   log: (level: LogLevel, action: string, details?: Record<string, any>) => void;
   events: LogEvent[];
@@ -23,9 +46,22 @@ export interface LoggerContextType {
 }
 
 // コンテキストの作成
+/**
+ * LoggerContext
+ * ログ機能を提供するReact Context
+ */
 export const LoggerContext = createContext<LoggerContextType | null>(null);
 
 // プロバイダーコンポーネント
+/**
+ * LoggerProvider
+ * @description
+ * アプリ全体にログ機能（LoggerContext）を提供するProviderコンポーネント。
+ * セッションIDやプラットフォーム情報も管理し、UX計測やデバッグに活用。
+ *
+ * @param {object} props
+ * @param {ReactNode} props.children - Provider配下でログ機能を利用可能にする
+ */
 export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<LogEvent[]>([]);
   // セッションIDはコンポーネントマウント時に1回だけ生成
@@ -38,7 +74,6 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     language: navigator.language,
     devicePixelRatio: window.devicePixelRatio,
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    colorScheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
   }));
   
   // ログイベントを記録する関数

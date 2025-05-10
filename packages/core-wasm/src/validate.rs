@@ -1,10 +1,38 @@
+//! validate.rs
+//!
+//! このモジュールはYAML Note MVPのコアWASMロジックの一部として、
+//! YAMLデータのバリデーション機能を提供します。
+//! YAML文字列とスキーマ（JSON Schema, YAML形式可）を受け取り、
+//! バリデーション結果をJSON形式で返します。
+//!
+//! - serde_yaml, serde_jsonによるパース
+//! - jsonschema-validによるスキーマ検証
+//! - エラー情報の構造化
+//!
+//! WASMバインディング経由でJavaScriptから利用されることを想定しています。
+
 use serde_json::{Value, json};
 use crate::error::{ErrorInfo, ValidationResult};
 
 use jsonschema_valid::schemas::Draft;
 use jsonschema_valid::Config;
 
-/// YAMLをバリデーションして結果をJSON文字列で返す
+/// YAMLデータを指定スキーマでバリデーションし、結果をJSON文字列で返す
+///
+/// # 引数
+/// * `yaml_str` - バリデーション対象のYAML文字列
+/// * `schema_str` - JSON Schema（YAMLまたはJSON形式）
+///
+/// # 返り値
+/// * バリデーション成功時: `{"success": true, "errors": []}`
+/// * バリデーション失敗時: `{"success": false, "errors": [ErrorInfo, ...]}`
+///
+/// # エラーケース
+/// - YAMLパースエラー、スキーマパースエラー、スキーマコンパイルエラー時も
+///   `success: false` でエラー内容を含むJSONを返す
+///
+/// # 用途
+/// - WASMバインディング経由でJSから呼び出される
 pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
     // YAMLをパース
     let yaml_value: Value = match serde_yaml::from_str(yaml_str) {

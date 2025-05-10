@@ -4,7 +4,13 @@
 
 /**
  * コンテンツのサマリーを生成する
- * プライバシーを保護するため、内容そのものは含めず、長さや構造情報のみを返す
+ * 
+ * @param {string} content - サマリー化するYAML/Markdown等のコンテンツ文字列
+ * @returns {string} プライバシーを保護したサマリー情報（JSON文字列）
+ * 
+ * @description
+ * プライバシー保護のため内容そのものは含めず、長さや構造情報のみを返す。
+ * 例：バイト数、行数、主要フィールドの有無など。
  */
 export const summarizeContent = (content: string): string => {
   // プライバシーを保護するためコンテンツのサマリーのみを作成
@@ -25,6 +31,12 @@ export const summarizeContent = (content: string): string => {
 
 /**
  * エラーオブジェクトを安全にシリアライズ化する
+ * 
+ * @param {any} error - 任意のエラーオブジェクト
+ * @returns {Record<string, any>} シリアライズ可能なエラー情報
+ * 
+ * @description
+ * エラー内容を安全にログやUI表示用に変換する。開発時のみスタックトレースも含める。
  */
 export const formatError = (error: any): Record<string, any> => {
   if (!error) return { message: 'Unknown error' };

@@ -13,6 +13,19 @@ interface MarkdownPreviewProps {
   className?: string;
 }
 
+/**
+ * Markdownプレビューコンポーネント
+ *
+ * @component
+ * @param {MarkdownPreviewProps} props - プレビューのプロパティ
+ * @param {string} props.content - Markdownとして表示する内容
+ * @param {string} [props.className] - 追加のCSSクラス
+ * @returns {JSX.Element}
+ *
+ * @description
+ * YAMLノートのcontentフィールドをMarkdownとして安全にプレビュー表示する。
+ * パフォーマンス計測やUXログも記録。remark/rehypeによる拡張Markdown対応。
+ */
 export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
   content,
   className = ''

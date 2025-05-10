@@ -1,3 +1,11 @@
+/**
+ * @file App.tsx
+ * @description YAML Note MVPのメインアプリケーションコンポーネント。
+ *              3ペイン（YAMLエディタ・エラー表示・Markdownプレビュー）を統括し、
+ *              ファイルアクセスやバリデーション、UXログ記録などの主要なロジックを管理する。
+ *              WASMコアとの連携や、各種カスタムフックの利用もここで行う。
+ */
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import YamlEditor from './components/YamlEditor';
 import ErrorBadge from './components/ErrorBadge';
@@ -31,8 +39,24 @@ metadata:
 const schemaPath = '/schemas/note.schema.yaml';
 
 // ビューモードの定義
+/**
+ * @typedef {'split' | 'editor' | 'preview'} ViewMode
+ * @description
+ * アプリのビュー切り替え用モード型。
+ * - 'split': 3ペイン表示
+ * - 'editor': YAMLエディタのみ
+ * - 'preview': Markdownプレビューのみ
+ */
 type ViewMode = 'split' | 'editor' | 'preview';
 
+/**
+ * YAML Note MVPのメインアプリケーションコンポーネント。
+ * 3ペイン（YAMLエディタ・エラー表示・Markdownプレビュー）を統括し、
+ * ファイルアクセスやバリデーション、UXログ記録などの主要なロジックを管理する。
+ * WASMコアとの連携や、各種カスタムフックの利用もここで行う。
+ *
+ * @returns {JSX.Element} アプリケーション全体のUI
+ */
 const App: React.FC = () => {
   const [yaml, setYaml] = useState<string>(defaultYaml);
   const [isSaved, setIsSaved] = useState<boolean>(true);
