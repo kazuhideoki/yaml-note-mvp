@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ValidationError } from '../hooks/useYaml';
+import useLogger from '../hooks/useLogger';
 
 interface ErrorBadgeProps {
   errors: ValidationError[];
@@ -7,17 +8,46 @@ interface ErrorBadgeProps {
   className?: string;
 }
 
-export const ErrorBadge: React.FC<ErrorBadgeProps> = ({ 
-  errors, 
+export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
+  errors,
   onClick,
-  className = '' 
+  className = ''
 }) => {
+  const { log } = useLogger();
+
+  // エラーバッジが表示された時にログを記録
+  useEffect(() => {
+    if (errors.length > 0) {
+      // エラータイプを集計
+      const errorTypes = errors.reduce((acc: Record<string, number>, err) => {
+        const type = err.message.includes('required') ? 'required_field' :
+                    err.message.includes('type') ? 'type_mismatch' :
+                    err.message.includes('pattern') ? 'pattern_mismatch' :
+                    'other';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
+
+      log('warn', 'error_badge_displayed', {
+        errorCount: errors.length,
+        errorTypes,
+        firstErrorLine: errors[0]?.line
+      });
+    }
+  }, [errors, log]);
+
   if (errors.length === 0) {
     return null;
   }
 
   // クリックハンドラー
-  const handleClick = (line: number) => {
+  const handleClick = (line: number, errorMessage: string) => {
+    // エラークリックのログ
+    log('info', 'error_badge_click', {
+      line,
+      errorMessage: errorMessage.substring(0, 50) // 長すぎるメッセージを切り詰め
+    });
+
     if (onClick) {
       onClick(line);
     }
@@ -35,10 +65,10 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
         
         <ul className="text-sm">
           {errors.map((error, index) => (
-            <li 
+            <li
               key={index}
               className="mb-1 cursor-pointer hover:bg-red-200 p-1 rounded"
-              onClick={() => handleClick(error.line)}
+              onClick={() => handleClick(error.line, error.message)}
             >
               {error.line > 0 && <span className="font-mono font-bold">行 {error.line}: </span>}
               {error.message}
