@@ -1,0 +1,23 @@
+{
+  "name": "yaml-note-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "validate-schema": "ajv -c ajv-formats validate -s packages/schemas/note.schema.yaml -d sample/note.yaml"
+  },
+  "devDependencies": {
+    "ajv": "^8.12.0",
+    "ajv-cli": "^5.0.0",
+    "ajv-formats": "^2.1.1",
+    "typescript": "^5.2.2"
+  }
+}
