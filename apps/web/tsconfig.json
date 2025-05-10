@@ -14,7 +14,16 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "core-wasm": ["../../../packages/core-wasm/pkg/core_wasm"]
+    },
+    
+    /* Type definitions */
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import YamlEditor from './components/YamlEditor';
+import ErrorBadge from './components/ErrorBadge';
 import useFileAccess from './hooks/useFileAccess';
+import useYaml from './hooks/useYaml';
 
 const defaultYaml = `title: My YAML Note
 content: |
@@ -20,29 +22,39 @@ metadata:
   version: 1.0
   status: draft`;
 
+// schemaのパスを正しく設定
+const schemaPath = '/schemas/note.schema.yaml';
+
 const App: React.FC = () => {
   const [yaml, setYaml] = useState<string>(defaultYaml);
   const [isSaved, setIsSaved] = useState<boolean>(true);
-  const { fileName, isSupported, openFile, saveFile } = useFileAccess();
+  const { fileName, openFile, saveFile } = useFileAccess();
+  const { validateYaml, validationResult } = useYaml();
+  const editorRef = useRef<any>(null);
 
+  // YAML変更時の処理
   const handleYamlChange = useCallback((newValue: string) => {
     setYaml(newValue);
     setIsSaved(false);
-  }, []);
+    validateYaml(newValue, schemaPath);
+  }, [validateYaml]);
 
+  // ファイルを開く処理
   const handleOpenFile = useCallback(async () => {
     try {
       const fileInfo = await openFile();
       if (fileInfo) {
         setYaml(fileInfo.content);
+        validateYaml(fileInfo.content, schemaPath);
         setIsSaved(true);
       }
     } catch (error) {
       console.error('Error opening file:', error);
       alert('ファイルを開く際にエラーが発生しました');
     }
-  }, [openFile]);
+  }, [openFile, validateYaml]);
 
+  // ファイルを保存する処理
   const handleSaveFile = useCallback(async () => {
     try {
       const success = await saveFile(yaml);
@@ -54,6 +66,18 @@ const App: React.FC = () => {
       alert('ファイルの保存中にエラーが発生しました');
     }
   }, [saveFile, yaml]);
+
+  // エラーバッジクリック時のエディタ行移動
+  const handleErrorClick = useCallback((line: number) => {
+    if (editorRef.current && line > 0) {
+      editorRef.current.setCursor(line - 1);
+    }
+  }, []);
+
+  // マウント時に初回バリデーション
+  useEffect(() => {
+    validateYaml(yaml, schemaPath);
+  }, [validateYaml, yaml]);
 
   return (
     <div className="flex flex-col h-screen bg-slate-100 p-4">
@@ -77,17 +101,31 @@ const App: React.FC = () => {
         </div>
       </header>
       
-      <div className="flex-1 mb-4">
+      <div className="flex-1 mb-4 relative">
         <YamlEditor
           value={yaml}
           onChange={handleYamlChange}
           className="h-full"
+          editorRef={editorRef}
         />
+        
+        {/* エラーバッジ */}
+        {!validationResult.success && (
+          <ErrorBadge 
+            errors={validationResult.errors} 
+            onClick={handleErrorClick}
+          />
+        )}
       </div>
       
       <footer className="flex justify-between text-sm text-gray-500">
         <div>{fileName || 'Unsaved document'}</div>
-        <div>{isSaved ? 'Saved' : 'Unsaved changes'}</div>
+        <div>
+          {isSaved ? 'Saved' : 'Unsaved changes'} 
+          {validationResult.success 
+            ? ' • Valid YAML' 
+            : ` • ${validationResult.errors.length} error(s)`}
+        </div>
       </footer>
     </div>
   );

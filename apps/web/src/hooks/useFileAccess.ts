@@ -6,6 +6,12 @@ interface FileInfo {
   name: string;
 }
 
+interface SaveOptions {
+  fileName: string;
+  extensions: string[];
+  startIn?: any; // Handle for file system API
+}
+
 export function useFileAccess() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileHandle, setFileHandle] = useState<any>(null);
@@ -55,14 +61,14 @@ export function useFileAccess() {
 
     try {
       const blob = new Blob([content], { type: 'text/yaml' });
-      const saveOptions = {
+      const saveOptions: SaveOptions = {
         fileName: fileName || 'note.yaml',
         extensions: ['.yaml', '.yml'],
       };
       
       // If we have a file handle, use it
       if (fileHandle) {
-        saveOptions['startIn'] = fileHandle;
+        saveOptions.startIn = fileHandle;
       }
       
       const savedHandle = await fileSave(blob, saveOptions);
