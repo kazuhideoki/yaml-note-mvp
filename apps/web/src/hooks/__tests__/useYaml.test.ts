@@ -3,7 +3,7 @@ import { useYaml } from '../useYaml';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // CoreWasm モジュールのモック
-vi.mock('core-wasm', () => ({
+vi.mock('@core-wasm', () => ({
   version: vi.fn().mockReturnValue('0.1.0'),
   validate_yaml: vi.fn().mockImplementation((yaml: string, _schema: string) => {
     // 簡単な検証ロジックのモック
