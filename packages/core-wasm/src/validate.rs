@@ -1,11 +1,9 @@
-// JSON Schema validation removed for WASM build compatibility
 use serde_json::{Value, json};
 use crate::error::{ErrorInfo, ValidationResult};
 
 /// YAMLをバリデーションして結果をJSON文字列で返す
-/// Note: This is a temporary implementation for WASM compatibility
-pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
-    // YAML構文チェックのみ実施
+/// ※現状はYAML構文チェックのみ（JSON Schemaバリデーションなしのダミー実装）
+pub fn validate_yaml(yaml_str: &str, _schema_str: &str) -> String {
     match serde_yaml::from_str::<Value>(yaml_str) {
         Ok(_) => ValidationResult::success().to_json(),
         Err(e) => ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json(),
