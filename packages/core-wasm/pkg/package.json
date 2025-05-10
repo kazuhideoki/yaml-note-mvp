@@ -1,14 +1,21 @@
 {
-  "name": "@core-wasm",
+  "name": "core-wasm",
+  "type": "module",
+  "collaborators": [
+    "YAML Note Team"
+  ],
+  "description": "Core YAML validation and processing for YAML Note",
   "version": "0.1.0",
-  "description": "YAML Note Core WASM Module",
-  "main": "core_wasm.js",
   "files": [
     "core_wasm_bg.wasm",
     "core_wasm.js",
+    "core_wasm_bg.js",
     "core_wasm.d.ts"
   ],
-  "sideEffects": false,
-  "module": "core_wasm.js",
-  "types": "core_wasm.d.ts"
+  "main": "core_wasm.js",
+  "types": "core_wasm.d.ts",
+  "sideEffects": [
+    "./core_wasm.js",
+    "./snippets/*"
+  ]
 }

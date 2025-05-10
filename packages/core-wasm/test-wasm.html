@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core WASM Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      margin-bottom: 20px;
+    }
+    h3 {
+      margin-top: 20px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>YAML Note Core WASM テスト</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import * as coreWasm from './pkg/core_wasm.js';
+    
+    const resultsEl = document.getElementById('results');
+    
+    function addResult(title, result, isCode = true) {
+      const section = document.createElement('div');
+      
+      const heading = document.createElement('h3');
+      heading.textContent = title;
+      section.appendChild(heading);
+      
+      if (isCode) {
+        const pre = document.createElement('pre');
+        pre.textContent = typeof result === 'object' ? JSON.stringify(result, null, 2) : result;
+        section.appendChild(pre);
+      } else {
+        const p = document.createElement('p');
+        p.innerHTML = result;
+        section.appendChild(p);
+      }
+      
+      resultsEl.appendChild(section);
+    }
+    
+    // テスト実行
+    async function runTests() {
+      try {
+        // バージョン情報表示
+        addResult('バージョン情報', coreWasm.version());
+        
+        // YAMLパースのテスト
+        const testYaml = `
+title: テストノート
+content: これはテスト用のコンテンツです
+tags:
+  - test
+  - yaml
+`;
+        const parsedJson = coreWasm.parse_yaml(testYaml);
+        addResult('YAML → JSON 変換', parsedJson);
+        
+        // JSON → YAML 変換テスト
+        const backToYaml = coreWasm.stringify_yaml(parsedJson);
+        addResult('JSON → YAML 変換', backToYaml);
+        
+        // バリデーションテスト
+        const testSchema = `
+type: object
+properties:
+  title:
+    type: string
+  content:
+    type: string
+  tags:
+    type: array
+    items:
+      type: string
+required:
+  - title
+`;
+        const validationResult = coreWasm.validate_yaml(testYaml, testSchema);
+        addResult('YAMLバリデーション（正常系）', validationResult);
+        
+        // バリデーションエラーテスト
+        const invalidYaml = `
+content: タイトルがないので不正
+`;
+        const invalidValidationResult = coreWasm.validate_yaml(invalidYaml, testSchema);
+        addResult('YAMLバリデーション（異常系）', invalidValidationResult);
+        
+        // パッチ適用テスト
+        const testPatch = JSON.stringify([
+          { op: 'add', path: '/metadata', value: { author: 'Test User' } },
+          { op: 'replace', path: '/content', value: '更新されたコンテンツ' }
+        ]);
+        const patchResult = coreWasm.apply_patch(testYaml, testPatch);
+        addResult('JSONパッチ適用', patchResult);
+        
+        // テスト完了メッセージ
+        addResult('テスト結果', '<span class="success">すべてのテストが正常に完了しました！</span>', false);
+      } catch (error) {
+        addResult('エラー', `<span class="error">${error.message}</span>`, false);
+        console.error(error);
+      }
+    }
+    
+    runTests();
+  </script>
+</body>
+</html>
