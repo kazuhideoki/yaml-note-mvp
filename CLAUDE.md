@@ -72,6 +72,10 @@ pnpm lint
 
 ## Development Workflow
 
+- **Required Rule**:
+  After any work (such as code modifications, additions, or refactoring), you must run the tests (`pnpm test` and, for Rust, `cargo test -p core-wasm`) and confirm that all tests pass.
+  If any tests fail, fix the issues before completing your work.
+
 1. **WASM Module Changes**:
 
    - Edit files in `packages/core-wasm/src/`
