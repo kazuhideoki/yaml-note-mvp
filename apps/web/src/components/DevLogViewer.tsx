@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import useLogger, { LogEvent, LogLevel } from '../hooks/useLogger';
+import useLogger from '../hooks/useLogger';
+import type { LogLevel } from '../contexts/LoggerContext';
 
 interface DevLogViewerProps {
   onClose: () => void;

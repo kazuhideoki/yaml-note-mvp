@@ -1,3 +1,4 @@
+// @ts-ignore React is needed for JSX even if not explicitly used
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import MarkdownPreview from '../MarkdownPreview';
