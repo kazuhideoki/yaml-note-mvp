@@ -2,18 +2,27 @@ import { useState, useEffect } from 'react';
 import * as yaml from 'js-yaml';
 
 /**
+ * useMarkdownContentの返却型
+ * @interface
+ * @property {string} markdownContent - 抽出されたMarkdown文字列
+ * @property {string | null} error - エラー内容（なければnull）
+ * @description
+ * YAMLからcontentフィールドを抽出し、Markdownとして返すフックの返却型。
+ */
+export interface UseMarkdownContentResult {
+  markdownContent: string;
+  error: string | null;
+}
+
+/**
  * YAML文字列からcontentフィールドを抽出し、Markdownとして利用するカスタムフック
  *
  * @param {string} yamlString - YAML形式のノートデータ
- * @returns {{
- *   markdownContent: string;
- *   error: string | null;
- * }}
- *
+ * @returns {UseMarkdownContentResult}
  * @description
  * YAMLをパースし、contentフィールドをMarkdownとして抽出。パース失敗やcontent未検出時はエラーを返す。
  */
-export function useMarkdownContent(yamlString: string) {
+export function useMarkdownContent(yamlString: string): UseMarkdownContentResult {
   const [markdownContent, setMarkdownContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
