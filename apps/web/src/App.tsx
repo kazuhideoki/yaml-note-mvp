@@ -7,10 +7,8 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import YamlEditor from './components/YamlEditor';
-import ErrorBadge from './components/ErrorBadge';
-import MarkdownPreview from './components/MarkdownPreview';
 import DevLogViewer from './components/DevLogViewer';
+import { EditorTabs, TabType } from './components/EditorTabs';
 import useFileAccess from './hooks/useFileAccess';
 import useYaml from './hooks/useYaml';
 import useMarkdownContent from './hooks/useMarkdownContent';
@@ -58,7 +56,11 @@ type ViewMode = 'split' | 'editor' | 'preview';
  * @returns {JSX.Element} アプリケーション全体のUI
  */
 const App: React.FC = () => {
+  // 3ビュー内容
+  const [markdown, setMarkdown] = useState<string>("# My YAML Note\n\nEnter your note content here.");
   const [yaml, setYaml] = useState<string>(defaultYaml);
+  const [schema, setSchema] = useState<string>(''); // 必要に応じて初期値
+  const [activeTab, setActiveTab] = useState<TabType>('yaml');
   const [isSaved, setIsSaved] = useState<boolean>(true);
   // ビューモードの初期値をlocalStorageから取得
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -86,29 +88,30 @@ const App: React.FC = () => {
     });
   };
 
-  // YAML変更時の処理
-  const handleYamlChange = useCallback((newValue: string) => {
-    setYaml(newValue);
-    setIsSaved(false);
-
-    // パフォーマンス計測開始
-    const endMeasure = createPerformanceMarker('yaml_validation');
-
-    // バリデーション実行
-    validateYaml(newValue, schemaPath);
-
-    // パフォーマンス計測終了とログ記録
-    const perfData = endMeasure();
-    if (perfData.duration > 50) { // 50ms以上かかった場合のみログに記録
-      log('debug', 'performance_measurement', perfData);
+  // EditorTabsの内容変更ハンドラ
+  const handleTabContentChange = useCallback((content: string) => {
+    if (activeTab === "markdown") {
+      setMarkdown(content);
+    } else if (activeTab === "yaml") {
+      setYaml(content);
+      setIsSaved(false);
+      // バリデーション
+      validateYaml(content, schemaPath);
+    } else if (activeTab === "schema") {
+      setSchema(content);
     }
-
-    // コンテンツ変更ログ（プライバシーに配慮）
+    // ログ
     log('info', 'editor_change', {
-      content_summary: summarizeContent(newValue),
-      changed_characters: Math.abs(newValue.length - yaml.length),
+      content_summary: summarizeContent(content),
+      tab: activeTab,
     });
-  }, [validateYaml, yaml, log]);
+  }, [activeTab, validateYaml, log]);
+
+  // タブ切替ハンドラ
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    log('info', 'tab_change', { tab });
+  }, [log]);
 
   // ファイルを開く処理
   const handleOpenFile = useCallback(async () => {
@@ -320,43 +323,15 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <div className={`flex-1 mb-4 ${
-        viewMode === 'split' ? 'grid grid-cols-2 gap-4' : 'flex'
-      }`}>
-        {/* YAMLエディタ */}
-        {(viewMode === 'editor' || viewMode === 'split') && (
-          <div className="relative h-full" style={{
-            width: viewMode === 'split' ? 'auto' : '100%'
-          }}>
-            <YamlEditor
-              value={yaml}
-              onChange={handleYamlChange}
-              className="h-full"
-              editorRef={editorRef}
-            />
-
-            {/* エラーバッジ */}
-            {!validationResult.success && (
-              <ErrorBadge
-                errors={validationResult.errors}
-                onClick={handleErrorClick}
-              />
-            )}
-          </div>
-        )}
-
-        {/* マークダウンプレビュー */}
-        {(viewMode === 'preview' || viewMode === 'split') && (
-          <div className="bg-white rounded-md shadow overflow-auto h-full" style={{
-            width: viewMode === 'split' ? 'auto' : '100%'
-          }}>
-            {mdError ? (
-              <div className="p-4 text-red-600">{mdError}</div>
-            ) : (
-              <MarkdownPreview content={markdownContent} />
-            )}
-          </div>
-        )}
+      <div className="flex-1 mb-4 flex flex-col">
+        <EditorTabs
+          markdown={markdown}
+          yaml={yaml}
+          schema={schema}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onContentChange={handleTabContentChange}
+        />
       </div>
 
       <footer className="flex justify-between text-sm text-gray-500">
