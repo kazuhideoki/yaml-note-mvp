@@ -1,0 +1,15 @@
+title: My YAML Note2
+content: |
+  # ノートです。
+
+  ## 自由に描こうよ
+
+tags:
+  - yaml
+  - note
+created_at: "2025-05-11T12:50:15.968Z"
+updated_at: "2025-05-11T12:50:15.968Z"
+metadata:
+  author: YAML Note User
+  version: 1.0
+  status: draft

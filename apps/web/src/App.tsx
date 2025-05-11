@@ -7,6 +7,9 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import YamlEditor from './components/YamlEditor';
+import ErrorBadge from './components/ErrorBadge';
+import MarkdownPreview from './components/MarkdownPreview';
 import DevLogViewer from './components/DevLogViewer';
 import { EditorTabs, TabType } from './components/EditorTabs';
 import useFileAccess from './hooks/useFileAccess';
@@ -76,6 +79,26 @@ const App: React.FC = () => {
   const { log } = useLogger();
   const editorRef = useRef<any>(null);
 
+  // スキーマを読み込む
+  useEffect(() => {
+    const loadSchema = async () => {
+      try {
+        const response = await fetch(schemaPath);
+        if (response.ok) {
+          const content = await response.text();
+          setSchema(content);
+          console.log("Schema loaded successfully:", content.substring(0, 50) + "...");
+        } else {
+          console.error("Failed to load schema:", response.statusText);
+        }
+      } catch (error) {
+        console.error('Error loading schema:', error);
+      }
+    };
+
+    loadSchema();
+  }, []);
+
   // ビューモード変更時にlocalStorageに保存
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
@@ -92,6 +115,30 @@ const App: React.FC = () => {
   const handleTabContentChange = useCallback((content: string) => {
     if (activeTab === "markdown") {
       setMarkdown(content);
+
+      // Markdown変更時にYAMLも更新
+      try {
+        // ここでは簡易実装として、タイトルをh1から抽出し、残りをcontentに入れる
+        const lines = content.split('\n');
+        let title = "Untitled";
+        let contentText = content;
+
+        // h1があれば抽出
+        if (lines.length > 0 && lines[0].startsWith('# ')) {
+          title = lines[0].substring(2).trim();
+          contentText = lines.slice(1).join('\n').trim();
+        }
+
+        // YAML形式に変換
+        const newYaml = yaml.replace(/title:.*/, `title: ${title}`)
+                           .replace(/content:.*(\n  .*)*/, `content: |\n  ${contentText.replace(/\n/g, '\n  ')}`);
+
+        setYaml(newYaml);
+        setIsSaved(false);
+        validateYaml(newYaml, schemaPath);
+      } catch (error) {
+        console.error('Error converting Markdown to YAML:', error);
+      }
     } else if (activeTab === "yaml") {
       setYaml(content);
       setIsSaved(false);
@@ -105,13 +152,19 @@ const App: React.FC = () => {
       content_summary: summarizeContent(content),
       tab: activeTab,
     });
-  }, [activeTab, validateYaml, log]);
+  }, [activeTab, validateYaml, log, yaml]);
 
   // タブ切替ハンドラ
   const handleTabChange = useCallback((tab: TabType) => {
+    // YAML → Markdown への切り替え時に、現在のYAMLからMarkdownを更新
+    if (activeTab === 'yaml' && tab === 'markdown') {
+      // Set markdown to current markdownContent from useMarkdownContent hook
+      setMarkdown(markdownContent || "# No content available");
+    }
+
     setActiveTab(tab);
     log('info', 'tab_change', { tab });
-  }, [log]);
+  }, [log, activeTab, markdownContent]);
 
   // ファイルを開く処理
   const handleOpenFile = useCallback(async () => {
@@ -356,6 +409,14 @@ const App: React.FC = () => {
             : ` • ${validationResult.errors.length} error(s)`}
         </div>
       </footer>
+
+      {/* エラーバッジ */}
+      {!validationResult.success && (
+        <ErrorBadge
+          errors={validationResult.errors}
+          onClick={handleErrorClick}
+        />
+      )}
 
       {/* 開発者ログビューア */}
       {showLogViewer && <DevLogViewer onClose={toggleLogViewer} />}
