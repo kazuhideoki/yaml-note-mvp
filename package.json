@@ -11,8 +11,7 @@
     "build": "pnpm --filter web build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
-    "validate-schema": "ajv -c ajv-formats validate -s packages/schemas/note.schema.yaml -d sample/note.yaml"
+    "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
     "ajv": "^8.12.0",

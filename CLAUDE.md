@@ -23,8 +23,9 @@ The project uses a monorepo structure with Rust (compiled to WebAssembly) for co
    - Provides sub-millisecond validation performance
 
 3. **Schema Definitions**:
-   - JSON Schema files (in YAML format) that define note structure
-   - Version-controlled to track schema evolution
+
+- JSON Schema files (in YAML format) are located under `apps/web/public/schemas/`
+- Schema evolution is tracked via version control
 
 ## Common Commands
 
