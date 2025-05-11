@@ -36,6 +36,7 @@ pub use error::{CoreError, ErrorInfo, ValidationResult};
 ///
 /// # 例
 /// ```
+/// use core_wasm::parse_yaml;
 /// let yaml = "title: Hello\ncontent: World";
 /// let json = parse_yaml(yaml);
 /// // => "{\"title\":\"Hello\",\"content\":\"World\"}"
