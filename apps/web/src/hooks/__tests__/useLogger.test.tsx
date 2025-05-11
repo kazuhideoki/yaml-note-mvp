@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks';
-import { LoggerProvider, useLogger } from '../useLogger';
+import { LoggerProvider } from '../../contexts/LoggerContext';
+import { useLogger } from '../useLogger';
 import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
@@ -46,8 +47,9 @@ describe('useLogger', () => {
       result.current.log('info', 'test_action', { test: true });
     });
     
-    expect(result.current.events).toHaveLength(1);
-    expect(result.current.events[0]).toMatchObject({
+    const userEvents = result.current.events.filter(e => e.action !== 'session_start');
+    expect(userEvents).toHaveLength(1);
+    expect(userEvents[0]).toMatchObject({
       level: 'info',
       action: 'test_action',
       details: { test: true },
@@ -81,13 +83,16 @@ describe('useLogger', () => {
       result.current.log('info', 'test2');
     });
     
-    expect(result.current.events).toHaveLength(2);
-    
+    const userEvents = result.current.events.filter(e => e.action !== 'session_start');
+    expect(userEvents).toHaveLength(2);
+
     act(() => {
       result.current.clearEvents();
     });
-    
-    expect(result.current.events).toHaveLength(0);
+
+    // session_startは残る可能性があるため、userEventsで判定
+    const afterClearEvents = result.current.events.filter(e => e.action !== 'session_start');
+    expect(afterClearEvents).toHaveLength(0);
   });
   
   it('should save logs to localStorage periodically', () => {
@@ -106,17 +111,20 @@ describe('useLogger', () => {
     vi.advanceTimersByTime(60000);
     
     expect(localStorageMock.setItem).toHaveBeenCalled();
-    expect(result.current.events).toHaveLength(0); // イベントがクリアされる
+    // session_startは残る可能性があるため、userEventsで判定
+    const afterSaveEvents = result.current.events.filter(e => e.action !== 'session_start');
+    expect(afterSaveEvents).toHaveLength(0); // ユーザーログはクリアされる
     
     // localStorage呼び出し引数の確認
     const setItemCalls = localStorageMock.setItem.mock.calls;
     expect(setItemCalls[0][0]).toBe('yaml_note_logs');
     
-    // 保存されたデータにdebugログが含まれていないこと
+    // 保存されたデータにdebugログやsession_startログが含まれていないこと
     const savedData = JSON.parse(setItemCalls[0][1]);
-    expect(savedData.length).toBe(1);
-    expect(savedData[0].action).toBe('test_action');
-    expect(savedData.filter((log: any) => log.level === 'debug').length).toBe(0);
+    const userSavedData = savedData.filter((log: any) => log.action !== 'session_start');
+    expect(userSavedData.length).toBe(1);
+    expect(userSavedData[0].action).toBe('test_action');
+    expect(userSavedData.filter((log: any) => log.level === 'debug').length).toBe(0);
   });
   
   it('should export logs correctly', () => {
@@ -140,10 +148,12 @@ describe('useLogger', () => {
     act(() => {
       exportedLogs = JSON.parse(result.current.exportLogs());
     });
-    
+
+    // session_startログを除外して検証
+    const userExportedLogs = exportedLogs.filter((log: any) => log.action !== 'session_start');
     // 過去のログと現在のログが含まれているか
-    expect(exportedLogs.length).toBe(2);
-    expect(exportedLogs[0].action).toBe('previous');
-    expect(exportedLogs[1].action).toBe('current');
+    expect(userExportedLogs.length).toBe(2);
+    expect(userExportedLogs[0].action).toBe('previous');
+    expect(userExportedLogs[1].action).toBe('current');
   });
 });

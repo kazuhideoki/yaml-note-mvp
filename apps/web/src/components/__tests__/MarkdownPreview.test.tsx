@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import MarkdownPreview from '../MarkdownPreview';
+import { LoggerProvider } from '../../contexts/LoggerContext';
 
 describe('MarkdownPreview', () => {
   it('renders markdown content correctly', () => {
@@ -13,7 +14,11 @@ This is a paragraph with **bold** and *italic* text.
 
 [A link](https://example.com)`;
 
-    render(<MarkdownPreview content={markdownContent} />);
+    render(
+      <LoggerProvider>
+        <MarkdownPreview content={markdownContent} />
+      </LoggerProvider>
+    );
     
     // Check heading
     expect(screen.getByText('Heading')).toBeInTheDocument();
@@ -34,7 +39,11 @@ This is a paragraph with **bold** and *italic* text.
 
   it('applies custom className', () => {
     const className = 'custom-class';
-    const { container } = render(<MarkdownPreview content="" className={className} />);
+    const { container } = render(
+      <LoggerProvider>
+        <MarkdownPreview content="" className={className} />
+      </LoggerProvider>
+    );
     
     expect(container.firstChild).toHaveClass(className);
     expect(container.firstChild).toHaveClass('prose'); // Default Tailwind typography class
