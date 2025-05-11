@@ -18,6 +18,7 @@ use wasm_bindgen::prelude::*;
 
 mod error;
 mod validate;
+mod md_transform;
 
 pub use error::{CoreError, ErrorInfo, ValidationResult};
 
@@ -58,17 +59,43 @@ pub fn parse_yaml(yaml_str: &str) -> String {
                     let result = ValidationResult::single_error(
                         ErrorInfo::new(0, format!("JSON serialization error: {}", e), "")
                     );
-                    result.to_json()
+                    return result.to_json();
                 }
             }
-        },
+        }
         Err(e) => {
             let result = ValidationResult::single_error(
-                ErrorInfo::from_yaml_error(&e)
+                ErrorInfo::new(0, format!("YAML parse error: {}", e), "")
             );
-            result.to_json()
+            return result.to_json();
         }
     }
+}
+
+/// Markdown文字列をYAML文字列に変換する
+///
+/// # 引数
+/// * `md_str` - Markdown形式の文字列
+///
+/// # 戻り値
+/// * 成功時: YAML形式の文字列
+/// * 失敗時: エラー情報を含むJSON文字列
+#[wasm_bindgen]
+pub fn md_to_yaml(md_str: &str) -> String {
+    md_transform::md_to_yaml(md_str)
+}
+
+/// YAML文字列をMarkdown文字列に変換する
+///
+/// # 引数
+/// * `yaml_str` - YAML形式の文字列
+///
+/// # 戻り値
+/// * 成功時: Markdown形式の文字列
+/// * 失敗時: エラー情報を含むJSON文字列
+#[wasm_bindgen]
+pub fn yaml_to_md(yaml_str: &str) -> String {
+    md_transform::yaml_to_md(yaml_str)
 }
 
 /// JSON文字列をYAML文字列に変換する

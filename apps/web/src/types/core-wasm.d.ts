@@ -23,6 +23,16 @@ declare module 'core-wasm' {
    * バージョン情報を取得する
    */
   export function version(): string;
+
+  /**
+   * Markdown文字列をYAML文字列に変換する
+   */
+  export function md_to_yaml(md: string): string;
+
+  /**
+   * YAML文字列をMarkdown文字列に変換する
+   */
+  export function yaml_to_md(yaml: string): string;
   
   /**
    * JSからのエラーメッセージをラップするためのコンバータ
