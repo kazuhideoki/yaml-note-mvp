@@ -10,10 +10,13 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import ErrorBadge from "./components/ErrorBadge";
 import DevLogViewer from "./components/DevLogViewer";
 import { EditorTabs, TabType } from "./components/EditorTabs";
+import ValidationToggle from "./components/ValidationToggle";
+import ValidationBanner from "./components/ValidationBanner";
 import useFileAccess from "./hooks/useFileAccess";
 import useYaml from "./hooks/useYaml";
 import useMarkdownContent from "./hooks/useMarkdownContent";
 import useLogger from "./hooks/useLogger";
+import useValidationToggle from "./hooks/useValidationToggle";
 import { summarizeContent, formatError } from "./utils/logUtils";
 
 const defaultYaml = `title: My YAML Note
@@ -56,12 +59,26 @@ const App: React.FC = () => {
   const [isSaved, setIsSaved] = useState<boolean>(true);
   // 開発用ログビューア表示状態
   const [showLogViewer, setShowLogViewer] = useState<boolean>(false);
+  
+  // Add validation toggle state
+  const { isValidationEnabled, toggleValidation, enableValidation } = useValidationToggle();
+  const [showValidationBanner, setShowValidationBanner] = useState<boolean>(false);
 
   const { fileName, openFile, saveFile } = useFileAccess();
-  const { validateYaml, validationResult } = useYaml();
+  const { validateYaml, validateSchema, validationResult } = useYaml(isValidationEnabled);
   const { markdownContent, error: mdError } = useMarkdownContent(yaml);
   const { log } = useLogger();
   const editorRef = useRef<any>(null);
+  
+  // Add effect to handle banner visibility when validation state changes
+  useEffect(() => {
+    // Show the banner only when validation is disabled
+    setShowValidationBanner(!isValidationEnabled);
+    // Log validation toggle state change
+    log("info", "validation_toggle", {
+      enabled: isValidationEnabled
+    });
+  }, [isValidationEnabled, log]);
 
   // スキーマを読み込む
   useEffect(() => {
@@ -144,11 +161,17 @@ const App: React.FC = () => {
         // Set markdown to current markdownContent from useMarkdownContent hook
         setMarkdown(markdownContent || "# No content available");
       }
+      
+      // Schema tab activation - validate the schema
+      if (tab === "schema" && !isValidationEnabled) {
+        // Warn about validation being disabled when entering schema tab
+        console.log("Schema edit mode: validation is disabled");
+      }
 
       setActiveTab(tab);
       log("info", "tab_change", { tab });
     },
-    [log, activeTab, markdownContent],
+    [log, activeTab, markdownContent, isValidationEnabled],
   );
 
   // ファイルを開く処理
@@ -284,8 +307,20 @@ const App: React.FC = () => {
               Save {!isSaved && "*"}
             </button>
           </div>
+          <ValidationToggle
+            isEnabled={isValidationEnabled}
+            onToggle={toggleValidation}
+            className="ml-4"
+          />
         </div>
       </header>
+
+      <ValidationBanner
+        isVisible={showValidationBanner}
+        onEnable={enableValidation}
+        onClose={() => setShowValidationBanner(false)}
+        className="mb-4"
+      />
 
       <div className="flex-1 mb-4 flex flex-col">
         <EditorTabs
@@ -322,7 +357,7 @@ const App: React.FC = () => {
       </footer>
 
       {/* エラーバッジ */}
-      {!validationResult.success && (
+      {!validationResult.success && isValidationEnabled && (
         <ErrorBadge
           errors={validationResult.errors}
           onClick={handleErrorClick}

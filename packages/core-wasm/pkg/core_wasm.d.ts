@@ -1,6 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+ * JSからのエラーメッセージをラップするためのコンバータ
+ */
+export function error_to_js_value(error: any): string;
+/**
  * YAML文字列をパースしてJSON文字列に変換する
  *
  * # 概要
@@ -75,6 +79,16 @@ export function stringify_yaml(json_str: string): string;
  */
 export function validate_yaml(yaml_str: string, schema_str: string): string;
 /**
+ * JSON Schemaをコンパイルし、スキーマ自体が有効かどうかを検証する
+ *
+ * # 引数
+ * * `schema_str` - 検証対象のJSON Schema文字列（YAML形式）
+ *
+ * # 戻り値
+ * * バリデーション結果を含むJSON文字列
+ */
+export function compile_schema(schema_str: string): string;
+/**
  * バージョン情報を取得する
  */
 export function version(): string;
@@ -111,7 +125,3 @@ export function apply_patch(yaml: string, patch_json: string): string;
  * * 競合情報を含むJSON文字列（例: {"has_conflict": true, "conflicts": [...] }）
  */
 export function detect_conflicts(base_yaml: string, edited_yaml: string): string;
-/**
- * JSからのエラーメッセージをラップするためのコンバータ
- */
-export function error_to_js_value(error: any): string;

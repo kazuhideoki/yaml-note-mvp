@@ -143,7 +143,17 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
     validate::validate_yaml(yaml_str, schema_str)
 }
 
-
+/// JSON Schemaをコンパイルし、スキーマ自体が有効かどうかを検証する
+///
+/// # 引数
+/// * `schema_str` - 検証対象のJSON Schema文字列（YAML形式）
+///
+/// # 戻り値
+/// * バリデーション結果を含むJSON文字列
+#[wasm_bindgen]
+pub fn compile_schema(schema_str: &str) -> String {
+    validate::compile_schema(schema_str)
+}
 
 /// バージョン情報を取得する
 #[wasm_bindgen]

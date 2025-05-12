@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // モックインタフェースでWASMモジュールを定義
 interface CoreWasmType {
   validate_yaml: (yaml: string, schema: string) => string;
+  compile_schema: (schema: string) => string; // Add compile_schema
   parse_yaml: (yaml: string) => string;
   stringify_yaml: (json: string) => string;
   apply_patch: (yaml: string, patch: string) => string;
@@ -44,13 +45,15 @@ const schemaCache = new Map<string, string>();
  * バリデーション結果（成功/失敗・エラーリスト）や初期化状態を管理し、エディタやUIに提供する。
  * スキーマ・YAML内容のキャッシュや、WASM初期化状態も内部で管理。
  *
+ * @param {boolean} validationEnabled - バリデーションを実行するかどうか
  * @returns {{
  *   isInitialized: boolean;
  *   validationResult: ValidationResult;
- *   // ...他の返却値
+ *   validateYaml: (yaml: string, schemaPath: string) => void;
+ *   validateSchema: (schema: string) => Promise<ValidationResult>;
  * }}
  */
-export function useYaml() {
+export function useYaml(validationEnabled: boolean = true) {
   // WASM初期化状態
   const [isInitialized, setIsInitialized] = useState(false);
   // 現在の検証結果
@@ -107,6 +110,27 @@ export function useYaml() {
     }
   }, []);
 
+  // 新機能: スキーマ自体を検証する関数
+  const validateSchema = useCallback(async (schema: string): Promise<ValidationResult> => {
+    if (!isInitialized || !CoreWasm) {
+      console.warn('WASM not initialized yet');
+      return { success: false, errors: [{ line: 0, message: 'WASM not initialized', path: '' }] };
+    }
+
+    try {
+      // スキーマのコンパイル・検証
+      const resultJson = CoreWasm.compile_schema(schema);
+      const result: ValidationResult = JSON.parse(resultJson);
+      return result;
+    } catch (error) {
+      console.error('Schema validation error:', error);
+      return {
+        success: false,
+        errors: [{ line: 0, message: `スキーマ検証エラー: ${error}`, path: '' }]
+      };
+    }
+  }, [isInitialized]);
+
   // デバウンスされたバリデーション関数
   const validateYaml = useCallback(
     debounce(async (yaml: string, schemaPath: string) => {
@@ -118,6 +142,12 @@ export function useYaml() {
 
       // 入力が空なら早期リターン
       if (!yaml.trim()) {
+        setValidationResult({ success: true, errors: [] });
+        return;
+      }
+
+      // バリデーションが無効な場合は常に成功を返す
+      if (!validationEnabled) {
         setValidationResult({ success: true, errors: [] });
         return;
       }
@@ -149,12 +179,13 @@ export function useYaml() {
         });
       }
     }, 30), // 30msのデバウンス
-    [isInitialized, loadSchema]
+    [isInitialized, loadSchema, validationEnabled] // validationEnabled を依存配列に追加
   );
 
   return {
     isInitialized,
     validateYaml,
+    validateSchema, // 新しい関数を公開
     validationResult
   };
 }

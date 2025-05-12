@@ -9,8 +9,6 @@ YAML-Only Note App – V2 設計書
   description: "YAML↔Markdown ラウンドトリップ変換・差分検知・JSON Schema バリデーションを Rust/WASM 側に集約し、UI からは wasm-bindgen API で呼び出す。"
 - id: 3
   description: "Validation ON/OFF トグルと Schema 編集をサポートし、ON では即時エラー表示、OFF では自由編集＋自動スキーマ再生成を検証する。"
-- id: 4
-  description: "操作イベントを JSONL ＋ PostHog に送出し、UX 指標を収集する基盤を V1 から継承・拡張する。"
 ```
 
 ## 2. 採用技術 & 役割
@@ -128,18 +126,6 @@ roadmap:
       - todo: "compile_schema API"
       - todo: "Validation ON/OFF 実装"
       - exit: "ON: errors, OFF: 無検証＆schema 編集保存可"
-  - phase: 8
-    name: "Live Preview & UX 改善"
-    tasks:
-      - todo: "yaml_to_md + remark-html"
-      - todo: "ショートカット / Undo履歴"
-      - exit: "Markdown が即時レンダ & 操作快適"
-  - phase: 9
-    name: "デスクトップ PoC (Tauri)"
-    tasks:
-      - todo: "Tauri bootstrap"
-      - todo: "core-wasm reuse, FS open/save"
-      - exit: "同一 wasm で macOS/Win/Linux 動作"
 
 completion_criteria:
   - "pnpm dev → ブラウザで 3 ビュー + Validation 動作"

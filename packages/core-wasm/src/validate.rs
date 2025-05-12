@@ -84,6 +84,71 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
     }
 }
 
+/// JSONスキーマ自体の妥当性を検証する関数
+///
+/// # 引数
+/// * `schema_str` - 検証対象のJSON Schemaをテキスト形式で受け取る（YAML形式可）
+///
+/// # 返り値
+/// * バリデーション成功時: `{"success": true, "errors": []}`
+/// * バリデーション失敗時: `{"success": false, "errors": [ErrorInfo, ...]}`
+///
+/// # エラーケース
+/// - YAMLパースエラー、JSON Schemaとして妥当でない場合にエラー情報を含むJSONを返す
+///
+/// # 用途
+/// - WASMバインディング経由でJSから呼び出され、スキーマ自体の検証に使用される
+pub fn compile_schema(schema_str: &str) -> String {
+    // スキーマをパース
+    let schema_value: Value = match serde_yaml::from_str(schema_str) {
+        Ok(v) => v,
+        Err(e) => {
+            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json();
+        }
+    };
+
+    // スキーマのタイプをチェック
+    match schema_value.get("type") {
+        Some(type_value) => {
+            // Verify the type value is valid
+            let valid_types = ["object", "array", "string", "number", "integer", "boolean", "null"];
+            let type_str = match type_value.as_str() {
+                Some(s) => s,
+                None => {
+                    return ValidationResult::error(vec![
+                        ErrorInfo::new(0, "Schema 'type' field must be a string", "")
+                    ]).to_json();
+                }
+            };
+            
+            if !valid_types.contains(&type_str) {
+                return ValidationResult::error(vec![
+                    ErrorInfo::new(0, format!("Invalid schema type: '{}'. Must be one of: object, array, string, number, integer, boolean, null", type_str), "")
+                ]).to_json();
+            }
+        },
+        None => {
+            return ValidationResult::error(vec![
+                ErrorInfo::new(0, "Schema missing 'type' field", "")
+            ]).to_json();
+        }
+    }
+
+    // スキーマをコンパイル（スキーマ自体が有効かチェック）
+    match Config::from_schema(&schema_value, Some(Draft::Draft7)) {
+        Ok(_) => {
+            // コンパイル成功 - スキーマは有効
+            ValidationResult::success().to_json()
+        },
+        Err(e) => {
+            // コンパイルエラー - スキーマが無効
+            ValidationResult::error(vec![
+                ErrorInfo::new(0, format!("Schema compilation error: {}", e), "")
+            ]).to_json()
+        }
+    }
+}
+
 /// YAMLに対してパッチを適用する
 pub fn apply_patch(yaml_str: &str, patch_str: &str) -> String {
     // YAMLをパース
@@ -477,5 +542,53 @@ mod tests {
         // エラーが含まれていることを確認
         assert!(result.contains(r#""success":false"#));
         assert!(result.contains(r#""message":"#));
+    }
+}
+
+#[cfg(test)]
+mod compile_schema_tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_schema() {
+        let valid_schema = r#"
+        type: object
+        properties:
+          title:
+            type: string
+          content:
+            type: string
+        required:
+          - title
+        "#;
+
+        let result = compile_schema(valid_schema);
+        assert!(result.contains(r#""success":true"#));
+    }
+
+    #[test]
+    fn test_invalid_schema() {
+        let invalid_schema = r#"
+        type: invalid_type  # Invalid type value
+        properties:
+          title:
+            type: string
+        "#;
+
+        let result = compile_schema(invalid_schema);
+        assert!(result.contains(r#""success":false"#));
+    }
+
+    #[test]
+    fn test_missing_type_schema() {
+        let missing_type_schema = r#"
+        properties:
+          title:
+            type: string
+        "#;
+
+        let result = compile_schema(missing_type_schema);
+        assert!(result.contains(r#""success":false"#));
+        assert!(result.contains("missing 'type' field"));
     }
 }
