@@ -55,7 +55,7 @@ const App: React.FC = () => {
   );
   const [yaml, setYaml] = useState<string>(defaultYaml);
   const [schema, setSchema] = useState<string>(""); // 必要に応じて初期値
-  const [activeTab, setActiveTab] = useState<TabType>("yaml");
+  const [activeTab, setActiveTab] = useState<TabType>("markdown");
   const [isSaved, setIsSaved] = useState<boolean>(true);
   // 開発用ログビューア表示状態
   const [showLogViewer, setShowLogViewer] = useState<boolean>(false);
@@ -65,8 +65,8 @@ const App: React.FC = () => {
   const [showValidationBanner, setShowValidationBanner] = useState<boolean>(false);
 
   const { fileName, openFile, saveFile } = useFileAccess();
-  const { validateYaml, validateSchema, validationResult } = useYaml(isValidationEnabled);
-  const { markdownContent, error: mdError } = useMarkdownContent(yaml);
+  const { validateYaml, validationResult } = useYaml(isValidationEnabled);
+  const { markdownContent } = useMarkdownContent(yaml);
   const { log } = useLogger();
   const editorRef = useRef<any>(null);
   
@@ -136,11 +136,6 @@ const App: React.FC = () => {
         } catch (error) {
           console.error("Error converting Markdown to YAML:", error);
         }
-      } else if (activeTab === "yaml") {
-        setYaml(content);
-        setIsSaved(false);
-        // バリデーション
-        validateYaml(content, schemaPath);
       } else if (activeTab === "schema") {
         setSchema(content);
       }
@@ -156,12 +151,6 @@ const App: React.FC = () => {
   // タブ切替ハンドラ
   const handleTabChange = useCallback(
     (tab: TabType) => {
-      // YAML → Markdown への切り替え時に、現在のYAMLからMarkdownを更新
-      if (activeTab === "yaml" && tab === "markdown") {
-        // Set markdown to current markdownContent from useMarkdownContent hook
-        setMarkdown(markdownContent || "# No content available");
-      }
-      
       // Schema tab activation - validate the schema
       if (tab === "schema" && !isValidationEnabled) {
         // Warn about validation being disabled when entering schema tab
@@ -325,7 +314,6 @@ const App: React.FC = () => {
       <div className="flex-1 mb-4 flex flex-col">
         <EditorTabs
           markdown={markdown}
-          yaml={yaml}
           schema={schema}
           activeTab={activeTab}
           onTabChange={handleTabChange}

@@ -8,7 +8,6 @@ interface CoreWasmType {
   validate_yaml: (yaml: string, schema: string) => string;
   parse_yaml: (yaml: string) => string;
   stringify_yaml: (json: string) => string;
-  apply_patch: (yaml: string, patch: string) => string;
   md_to_yaml: (md: string) => string;
   yaml_to_md: (yaml: string) => string;
   version: () => string;

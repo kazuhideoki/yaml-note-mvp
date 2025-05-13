@@ -92,36 +92,3 @@ export function compile_schema(schema_str: string): string;
  * バージョン情報を取得する
  */
 export function version(): string;
-/**
- * 2つのYAML文字列の差分(JSON Patch形式)を生成する
- *
- * # 引数
- * * `base_yaml` - 元となるYAML文字列
- * * `edited_yaml` - 編集後のYAML文字列
- *
- * # 戻り値
- * * JSON Patch形式の文字列（エラー時は空配列"[]"）
- */
-export function yaml_diff(base_yaml: string, edited_yaml: string): string;
-/**
- * YAMLとJSON Patchを受け取り、パッチ適用後のYAML文字列を返す
- *
- * # 引数
- * * `yaml` - 適用元のYAML文字列
- * * `patch_json` - JSON Patch配列文字列
- *
- * # 戻り値
- * * パッチ適用後のYAML文字列（エラー時は元のYAMLを返す）
- */
-export function apply_patch(yaml: string, patch_json: string): string;
-/**
- * 2つのYAML文字列間で競合があるか検出し、結果をJSONで返す
- *
- * # 引数
- * * `base_yaml` - 元となるYAML文字列
- * * `edited_yaml` - 編集後のYAML文字列
- *
- * # 戻り値
- * * 競合情報を含むJSON文字列（例: {"has_conflict": true, "conflicts": [...] }）
- */
-export function detect_conflicts(base_yaml: string, edited_yaml: string): string;

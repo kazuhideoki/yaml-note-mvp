@@ -25,7 +25,6 @@ use serde_json::Value;
 /// 4. ヘッダー情報とマージして完全なYAMLを構築
 pub fn md_to_yaml(md_str: &str) -> String {
     let mut title = String::new();
-    let mut content = String::new();
     let mut in_title = false;
     let mut found_title = false;
 
@@ -49,9 +48,9 @@ pub fn md_to_yaml(md_str: &str) -> String {
     }
 
     // タイトルが見つからない場合は元のテキストをコンテンツとして扱う
-    if !found_title {
-        content = md_str.to_string();
+    let content = if !found_title {
         title = "Untitled Document".to_string();
+        md_str.to_string()
     } else {
         // タイトル行を除いた残りをcontentとする
         let mut lines = md_str.lines();
@@ -66,8 +65,8 @@ pub fn md_to_yaml(md_str: &str) -> String {
                 content_lines.push(line);
             }
         }
-        content = content_lines.join("\n").trim_start().to_string();
-    }
+        content_lines.join("\n").trim_start().to_string()
+    };
 
     // YAMLの構築
     let yaml = format!("title: {}\ncontent: |\n{}", title, indent_content(&content));

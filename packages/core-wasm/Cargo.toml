@@ -17,7 +17,6 @@ pulldown-cmark = "0.9.2"
 thiserror = "1.0.47"
 getrandom = { version = "0.2.16", features = ["js", "wasm-bindgen"] }
 jsonschema-valid = "0.4"
-json-patch = "1.0"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.37"

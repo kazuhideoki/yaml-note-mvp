@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // モックインタフェースでWASMモジュールを定義
 interface CoreWasmType {
   validate_yaml: (yaml: string, schema: string) => string;
-  compile_schema: (schema: string) => string; // Add compile_schema
   parse_yaml: (yaml: string) => string;
   stringify_yaml: (json: string) => string;
-  apply_patch: (yaml: string, patch: string) => string;
   version: () => string;
   error_to_js_value: (error: any) => string;
 }
@@ -110,26 +108,6 @@ export function useYaml(validationEnabled: boolean = true) {
     }
   }, []);
 
-  // 新機能: スキーマ自体を検証する関数
-  const validateSchema = useCallback(async (schema: string): Promise<ValidationResult> => {
-    if (!isInitialized || !CoreWasm) {
-      console.warn('WASM not initialized yet');
-      return { success: false, errors: [{ line: 0, message: 'WASM not initialized', path: '' }] };
-    }
-
-    try {
-      // スキーマのコンパイル・検証
-      const resultJson = CoreWasm.compile_schema(schema);
-      const result: ValidationResult = JSON.parse(resultJson);
-      return result;
-    } catch (error) {
-      console.error('Schema validation error:', error);
-      return {
-        success: false,
-        errors: [{ line: 0, message: `スキーマ検証エラー: ${error}`, path: '' }]
-      };
-    }
-  }, [isInitialized]);
 
   // デバウンスされたバリデーション関数
   const validateYaml = useCallback(
@@ -185,7 +163,6 @@ export function useYaml(validationEnabled: boolean = true) {
   return {
     isInitialized,
     validateYaml,
-    validateSchema, // 新しい関数を公開
     validationResult
   };
 }

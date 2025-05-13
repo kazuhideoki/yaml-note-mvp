@@ -19,7 +19,6 @@ use wasm_bindgen::prelude::*;
 mod error;
 mod validate;
 mod md_transform;
-mod diff;
 
 pub use error::{CoreError, ErrorInfo, ValidationResult};
 
@@ -60,7 +59,7 @@ pub fn parse_yaml(yaml_str: &str) -> String {
                     let result = ValidationResult::single_error(
                         ErrorInfo::new(0, format!("JSON serialization error: {}", e), "")
                     );
-                    return result.to_json();
+                    result.to_json()
                 }
             }
         }
@@ -68,7 +67,7 @@ pub fn parse_yaml(yaml_str: &str) -> String {
             let result = ValidationResult::single_error(
                 ErrorInfo::new(0, format!("YAML parse error: {}", e), "")
             );
-            return result.to_json();
+            result.to_json()
         }
     }
 }
@@ -161,44 +160,6 @@ pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-/// 2つのYAML文字列の差分(JSON Patch形式)を生成する
-///
-/// # 引数
-/// * `base_yaml` - 元となるYAML文字列
-/// * `edited_yaml` - 編集後のYAML文字列
-///
-/// # 戻り値
-/// * JSON Patch形式の文字列（エラー時は空配列"[]"）
-#[wasm_bindgen]
-pub fn yaml_diff(base_yaml: &str, edited_yaml: &str) -> String {
-    diff::yaml_diff(base_yaml, edited_yaml)
-}
-
-/// YAMLとJSON Patchを受け取り、パッチ適用後のYAML文字列を返す
-///
-/// # 引数
-/// * `yaml` - 適用元のYAML文字列
-/// * `patch_json` - JSON Patch配列文字列
-///
-/// # 戻り値
-/// * パッチ適用後のYAML文字列（エラー時は元のYAMLを返す）
-#[wasm_bindgen]
-pub fn apply_patch(yaml: &str, patch_json: &str) -> String {
-    diff::apply_patch(yaml, patch_json)
-}
-
-/// 2つのYAML文字列間で競合があるか検出し、結果をJSONで返す
-///
-/// # 引数
-/// * `base_yaml` - 元となるYAML文字列
-/// * `edited_yaml` - 編集後のYAML文字列
-///
-/// # 戻り値
-/// * 競合情報を含むJSON文字列（例: {"has_conflict": true, "conflicts": [...] }）
-#[wasm_bindgen]
-pub fn detect_conflicts(base_yaml: &str, edited_yaml: &str) -> String {
-    diff::detect_conflicts(base_yaml, edited_yaml)
-}
 
 #[cfg(test)]
 mod tests {
