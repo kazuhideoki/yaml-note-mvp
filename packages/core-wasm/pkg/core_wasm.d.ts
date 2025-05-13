@@ -1,10 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * JSからのエラーメッセージをラップするためのコンバータ
- */
-export function error_to_js_value(error: any): string;
-/**
  * YAML文字列をパースしてJSON文字列に変換する
  *
  * # 概要
@@ -92,3 +88,37 @@ export function compile_schema(schema_str: string): string;
  * バージョン情報を取得する
  */
 export function version(): string;
+/**
+ * Markdownからフロントマターを解析して検証結果を返す
+ *
+ * # 引数
+ * * `md_str` - フロントマターを含むMarkdown文字列
+ *
+ * # 戻り値
+ * * 検証結果を含むJSON文字列
+ *   - 成功時: `{"success":true,"errors":[]}`
+ *   - 失敗時: `{"success":false,"errors":[ErrorInfo, ...]}`
+ *
+ * # エラーケース
+ * - フロントマターがない、または不完全な場合
+ * - YAMLパースエラー
+ * - フロントマター構文エラー（空のschema_pathなど）
+ */
+export function parse_and_validate_frontmatter(md_str: string): string;
+/**
+ * Markdownの見出し構造をYAML形式に変換する
+ *
+ * # 引数
+ * * `md_str` - Markdown文字列
+ *
+ * # 戻り値
+ * * 見出し構造に基づいたYAML文字列
+ *   - H1 → title フィールド
+ *   - H2 → sections 配列の要素
+ *   - H3 → sections[].subsections 配列の要素
+ */
+export function md_headings_to_yaml(md_str: string): string;
+/**
+ * JSからのエラーメッセージをラップするためのコンバータ
+ */
+export function error_to_js_value(error: any): string;

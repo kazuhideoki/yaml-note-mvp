@@ -19,6 +19,7 @@ use wasm_bindgen::prelude::*;
 mod error;
 mod validate;
 mod md_transform;
+mod frontmatter;
 
 pub use error::{CoreError, ErrorInfo, ValidationResult};
 
@@ -158,6 +159,50 @@ pub fn compile_schema(schema_str: &str) -> String {
 #[wasm_bindgen]
 pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
+}
+
+/// Markdownからフロントマターを解析して検証結果を返す
+///
+/// # 引数
+/// * `md_str` - フロントマターを含むMarkdown文字列
+///
+/// # 戻り値
+/// * 検証結果を含むJSON文字列
+///   - 成功時: `{"success":true,"errors":[]}`
+///   - 失敗時: `{"success":false,"errors":[ErrorInfo, ...]}`
+///
+/// # エラーケース
+/// - フロントマターがない、または不完全な場合
+/// - YAMLパースエラー
+/// - フロントマター構文エラー（空のschema_pathなど）
+#[wasm_bindgen]
+pub fn parse_and_validate_frontmatter(md_str: &str) -> String {
+    match frontmatter::parse_frontmatter(md_str) {
+        Ok(frontmatter) => {
+            let validation_result = frontmatter::validate_frontmatter(&frontmatter);
+            validation_result.to_json()
+        },
+        Err(e) => {
+            ValidationResult::single_error(
+                ErrorInfo::new(0, e.to_string(), "")
+            ).to_json()
+        }
+    }
+}
+
+/// Markdownの見出し構造をYAML形式に変換する
+///
+/// # 引数
+/// * `md_str` - Markdown文字列
+///
+/// # 戻り値
+/// * 見出し構造に基づいたYAML文字列
+///   - H1 → title フィールド
+///   - H2 → sections 配列の要素
+///   - H3 → sections[].subsections 配列の要素
+#[wasm_bindgen]
+pub fn md_headings_to_yaml(md_str: &str) -> String {
+    md_transform::md_headings_to_yaml(md_str)
 }
 
 

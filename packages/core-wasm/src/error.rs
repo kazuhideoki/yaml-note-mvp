@@ -9,6 +9,7 @@ use wasm_bindgen::prelude::*;
 /// - YAML/JSONパースエラー
 /// - スキーマエラー
 /// - バリデーションエラー
+/// - フロントマターエラー
 #[derive(Error, Debug)]
 pub enum CoreError {
     #[error("YAML parse error: {0}")]
@@ -22,6 +23,12 @@ pub enum CoreError {
 
     #[error("Validation error: {0}")]
     ValidationError(String),
+    
+    #[error("Frontmatter parse error: {0}")]
+    FrontmatterParseError(String),
+
+    #[error("Frontmatter validation error: {0}")]
+    FrontmatterValidationError(String),
 }
 
 /// フロントエンドに返すエラー情報
