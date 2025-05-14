@@ -3,6 +3,7 @@ import { ValidationError } from "./useYaml";
 import { useYamlCore } from "./useYamlCore";
 import { fetchSchema } from "../utils/schema";
 import useLogger from "./useLogger";
+import useFileAccess from "./useFileAccess";
 
 // フロントマター抽出ユーティリティ
 const extractFrontmatter = (markdown: string) => {
@@ -59,7 +60,13 @@ export const useValidator = (markdown: string) => {
     validateYamlWithSchema,
   } = useYamlCore();
 
+  const fileAccess = useFileAccess();
   const { log } = useLogger();
+
+  // 現在開いているファイルパスを基準パスとして使用
+  const basePath = fileAccess.fileName || null;
+
+  console.log("Current file path in useValidator:", basePath);
 
   // エラーを手動でクリアする関数
   const clearErrors = useCallback(() => {
@@ -104,7 +111,10 @@ export const useValidator = (markdown: string) => {
           if (currentSchemaPath && isValidated) {
             try {
               // ステップ2: スキーマを取得
-              const schema = await fetchSchema(currentSchemaPath);
+              const schema = await fetchSchema(
+                currentSchemaPath,
+                basePath ?? undefined,
+              );
 
               // ステップ3: Markdown → YAML変換
               const yaml = await markdownToYaml(markdown);
@@ -115,20 +125,34 @@ export const useValidator = (markdown: string) => {
               // スキーマ検証エラーを追加
               allErrors = [...allErrors, ...schemaErrors];
             } catch (schemaError) {
-              // スキーマ取得または検証エラー
+              const errorMessage =
+                schemaError instanceof Error
+                  ? schemaError.message
+                  : String(schemaError);
+
+              // 絶対パスエラーの場合は特別なエラーメッセージを表示
+              const isAbsolutePathError = errorMessage.includes(
+                "絶対パスでのスキーマ参照はサポートされていません",
+              );
+
               allErrors.push({
-                line: 0,
-                message: `スキーマ検証エラー: ${schemaError instanceof Error ? schemaError.message : String(schemaError)}`,
-                path: "",
+                line: 2, // フロントマターの行（schema_pathの行を指すよう推定）
+                message: isAbsolutePathError
+                  ? `スキーマパスエラー: ${errorMessage}`
+                  : `スキーマ検証エラー: ${errorMessage}`,
+                path: isAbsolutePathError ? "schema_path" : "",
               });
 
-              log("error", "schema_validation_error", {
-                error:
-                  schemaError instanceof Error
-                    ? schemaError.message
-                    : String(schemaError),
-                schemaPath: currentSchemaPath,
-              });
+              log(
+                "error",
+                isAbsolutePathError
+                  ? "schema_path_error"
+                  : "schema_validation_error",
+                {
+                  error: errorMessage,
+                  schemaPath: currentSchemaPath,
+                },
+              );
             }
           }
         }
