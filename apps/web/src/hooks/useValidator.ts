@@ -1,7 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ValidationError } from "./useYaml";
 import { useYamlCore } from "./useYamlCore";
+import { fetchSchema } from "../utils/schema";
 import useLogger from "./useLogger";
+
+// フロントマター抽出ユーティリティ
+const extractFrontmatter = (markdown: string) => {
+  const match = markdown.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return null;
+
+  const frontmatterLines = match[1].split("\n");
+  const frontmatter: Record<string, any> = {};
+
+  frontmatterLines.forEach((line) => {
+    const colonIndex = line.indexOf(":");
+    if (colonIndex !== -1) {
+      const key = line.slice(0, colonIndex).trim();
+      let value = line.slice(colonIndex + 1).trim();
+
+      // 値の型変換
+      if (value === "true") value = true;
+      else if (value === "false") value = false;
+
+      frontmatter[key] = value;
+    }
+  });
+
+  return frontmatter;
+};
 
 /**
  * Markdownのバリデーション機能を提供するHook
@@ -11,32 +37,40 @@ import useLogger from "./useLogger";
  * @returns {{
  *   errors: ValidationError[],
  *   isValidating: boolean,
+ *   schemaPath: string | null,
+ *   validated: boolean,
  *   clearErrors: () => void
  * }}
  *
  * @description
- * Markdownテキストを受け取り、WASMコアを使用してフロントマター検証を実行。
+ * Markdownテキストを受け取り、フロントマター検証とスキーマ検証を実行する。
  * 30msのデバウンス処理を行い、エラー結果を返却する。
- * エラーが解消された場合は確実に状態をクリアする。
  */
 export const useValidator = (markdown: string) => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isValidating, setIsValidating] = useState<boolean>(false);
-  const { wasmLoaded, validateFrontmatter } = useYamlCore();
+  const [schemaPath, setSchemaPath] = useState<string | null>(null);
+  const [validated, setValidated] = useState<boolean>(true);
+
+  const {
+    wasmLoaded,
+    validateFrontmatter,
+    markdownToYaml,
+    validateYamlWithSchema,
+  } = useYamlCore();
+
   const { log } = useLogger();
-  const prevMarkdownRef = useRef<string>("");
-  const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // エラーを手動でクリアする関数
-  const clearErrors = () => {
+  const clearErrors = useCallback(() => {
     setErrors([]);
     log("info", "errors_manually_cleared", {
       previousErrorCount: errors.length,
     });
-  };
+  }, [errors.length, log]);
 
+  // フロントマターとMarkdownの検証処理
   useEffect(() => {
-    // 入力が空になった場合やWASMが読み込まれていない場合はエラーをクリア
     if (!wasmLoaded || !markdown) {
       setErrors([]);
       return;
@@ -45,41 +79,70 @@ export const useValidator = (markdown: string) => {
     // 検証中フラグを設定
     setIsValidating(true);
 
-    // 前回のタイマーをクリア
-    if (validationTimerRef.current) {
-      clearTimeout(validationTimerRef.current);
-    }
-
-    // Markdownコンテンツの変更を検出
-    const contentChanged = prevMarkdownRef.current !== markdown;
-    prevMarkdownRef.current = markdown;
-
     // 30msのデバウンス処理
-    validationTimerRef.current = setTimeout(async () => {
+    const timerId = setTimeout(async () => {
       try {
         // 検証開始時間を記録（パフォーマンス測定用）
         const startTime = performance.now();
+        let allErrors: ValidationError[] = [];
 
-        // フロントマター検証の実行
-        const validationResult = await validateFrontmatter(markdown);
+        // ステップ1: フロントマター検証
+        const frontmatterErrors = await validateFrontmatter(markdown);
+        allErrors = [...frontmatterErrors];
 
-        // エラーリストを更新（必ず新しい配列を設定して確実に再レンダリングを発生させる）
-        if (validationResult.length === 0 && errors.length > 0) {
-          // エラーが解消された場合
-          log("info", "validation_errors_resolved", {
-            previousErrorCount: errors.length,
-          });
+        // フロントマターが正常な場合のみスキーマ検証を行う
+        if (frontmatterErrors.length === 0) {
+          // フロントマターから schema_path と validated を抽出
+          const frontmatter = extractFrontmatter(markdown);
+          const currentSchemaPath = frontmatter?.schema_path || null;
+          const isValidated = frontmatter?.validated !== false; // デフォルトはtrue
+
+          setSchemaPath(currentSchemaPath);
+          setValidated(isValidated);
+
+          // schema_path が設定されており、validated が true の場合のみスキーマ検証を実行
+          if (currentSchemaPath && isValidated) {
+            try {
+              // ステップ2: スキーマを取得
+              const schema = await fetchSchema(currentSchemaPath);
+
+              // ステップ3: Markdown → YAML変換
+              const yaml = await markdownToYaml(markdown);
+
+              // ステップ4: YAML × Schema 検証
+              const schemaErrors = await validateYamlWithSchema(yaml, schema);
+
+              // スキーマ検証エラーを追加
+              allErrors = [...allErrors, ...schemaErrors];
+            } catch (schemaError) {
+              // スキーマ取得または検証エラー
+              allErrors.push({
+                line: 0,
+                message: `スキーマ検証エラー: ${schemaError instanceof Error ? schemaError.message : String(schemaError)}`,
+                path: "",
+              });
+
+              log("error", "schema_validation_error", {
+                error:
+                  schemaError instanceof Error
+                    ? schemaError.message
+                    : String(schemaError),
+                schemaPath: currentSchemaPath,
+              });
+            }
+          }
         }
-        
-        setErrors(validationResult);
+
+        // エラーリストを更新
+        setErrors(allErrors);
 
         // パフォーマンスログ
         const validationTime = performance.now() - startTime;
         log("info", "validation_time", {
           component: "useValidator",
           timeMs: validationTime.toFixed(2),
-          hasErrors: validationResult.length > 0,
-          contentChanged,
+          hasErrors: allErrors.length > 0,
+          phase: "S3",
         });
       } catch (error) {
         console.error("Validation error:", error);
@@ -99,20 +162,21 @@ export const useValidator = (markdown: string) => {
         });
       } finally {
         setIsValidating(false);
-        validationTimerRef.current = null;
       }
     }, 30); // 30msのデバウンス
 
     // クリーンアップ
-    return () => {
-      if (validationTimerRef.current) {
-        clearTimeout(validationTimerRef.current);
-        validationTimerRef.current = null;
-      }
-    };
-  }, [markdown, wasmLoaded, validateFrontmatter, log, errors.length]);
+    return () => clearTimeout(timerId);
+  }, [
+    markdown,
+    wasmLoaded,
+    validateFrontmatter,
+    markdownToYaml,
+    validateYamlWithSchema,
+    log,
+  ]);
 
-  return { errors, isValidating, clearErrors };
+  return { errors, isValidating, schemaPath, validated, clearErrors };
 };
 
 export default useValidator;

@@ -8,34 +8,34 @@ properties:
   id:
     type: string
     description: Unique identifier for the note
-  
+
   title:
     type: string
     description: Title of the note
     minLength: 1
     maxLength: 200
-  
+
   content:
     type: string
     description: Main content of the note
-  
+
   tags:
     type: array
     description: List of tags associated with the note
     items:
       type: string
       pattern: ^[a-zA-Z0-9_-]+$
-  
+
   created_at:
     type: string
     description: Creation timestamp
     format: date-time
-  
+
   updated_at:
     type: string
     description: Last update timestamp
     format: date-time
-  
+
   metadata:
     type: object
     description: Additional metadata for the note

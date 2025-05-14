@@ -9,4 +9,7 @@ declare module 'core-wasm' {
   export function apply_patch(yaml_str: string, patch_str: string): string;
   export function version(): string;
   export function error_to_js_value(error: any): string;
+  export function md_to_yaml(md: string): string;
+  export function yaml_to_md(yaml: string): string;
+  export function parse_and_validate_frontmatter(md: string): string;
 }

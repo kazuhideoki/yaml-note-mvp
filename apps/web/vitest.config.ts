@@ -17,5 +17,15 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json', 'html'],
     },
+    deps: {
+      inline: [/^(?!.*node_modules).*$/],
+    },
+    // core-wasm モジュールをモックに置き換える
+    mockReset: true,
+    mock: {
+      'core-wasm': {
+        module: 'src/hooks/__mocks__/core-wasm.ts',
+      },
+    },
   },
 });

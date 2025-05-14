@@ -199,6 +199,93 @@ export function useYamlCore() {
     [instance, wasmLoaded]
   );
 
+  /**
+   * マークダウンからYAMLに変換
+   *
+   * @param {string} markdown - 変換するMarkdown文字列
+   * @returns {Promise<string>} 変換後のYAML文字列
+   *
+   * @description
+   * Markdownの見出し構造をYAML階層構造に変換する。
+   * WASMコアの`md_to_yaml`関数を使用。
+   */
+  const markdownToYaml = useCallback(
+    async (markdown: string): Promise<string> => {
+      if (!instance || !wasmLoaded) {
+        throw new Error("WASM module not loaded");
+      }
+
+      try {
+        return instance.md_to_yaml(markdown);
+      } catch (error) {
+        console.error("Markdown to YAML conversion error:", error);
+        throw error;
+      }
+    },
+    [instance, wasmLoaded],
+  );
+
+  /**
+   * YAMLをスキーマで検証
+   *
+   * @param {string} yaml - 検証するYAML文字列
+   * @param {string} schema - JSONスキーマ文字列
+   * @returns {Promise<ValidationError[]>} 検証エラーの配列
+   *
+   * @description
+   * YAMLをJSONスキーマで検証し、エラーがあればValidationError[]として返す。
+   * WASMコアの`validate_yaml`関数を使用。
+   */
+  const validateYamlWithSchema = useCallback(
+    async (yaml: string, schema: string): Promise<ValidationError[]> => {
+      if (!instance || !wasmLoaded) {
+        throw new Error("WASM module not loaded");
+      }
+
+      try {
+        const resultJson = instance.validate_yaml(yaml, schema);
+        const result = JSON.parse(resultJson);
+
+        if (!result.success) {
+          return result.errors.map((err: any) => ({
+            line: err.line || 0,
+            message: `スキーマ検証エラー: ${err.message}`,
+            path: err.path || "",
+          }));
+        }
+
+        return [];
+      } catch (error) {
+        console.error("YAML schema validation error:", error);
+        throw error;
+      }
+    },
+    [instance, wasmLoaded],
+  );
+
+  /**
+   * YAMLパッチを適用
+   *
+   * @param {string} yaml - 元のYAML文字列
+   * @param {string} patch - 適用するパッチ（JSON Patch形式）
+   * @returns {Promise<string>} パッチ適用後のYAML文字列
+   */
+  const applyPatch = useCallback(
+    async (yaml: string, patch: string): Promise<string> => {
+      if (!instance || !wasmLoaded) {
+        throw new Error("WASM module not loaded");
+      }
+
+      try {
+        return instance.apply_patch(yaml, patch);
+      } catch (error) {
+        console.error("YAML patch application error:", error);
+        throw error;
+      }
+    },
+    [instance, wasmLoaded],
+  );
+
   return {
     wasmLoaded,
     wasmLoading,
@@ -206,6 +293,9 @@ export function useYamlCore() {
     mdToYaml,
     yamlToMd,
     validateFrontmatter,
+    markdownToYaml,
+    validateYamlWithSchema,
+    applyPatch,
   };
 }
 
