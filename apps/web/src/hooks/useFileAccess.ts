@@ -17,7 +17,7 @@ interface SaveOptions {
   /** 許可する拡張子 */
   extensions: string[];
   /** 開始ディレクトリやファイルハンドル */
-  startIn?: any; // Handle for file system API
+  startIn?: FileSystemFileHandle;
 }
 
 /**
@@ -52,7 +52,9 @@ export type UseFileAccessResult = {
  */
 export function useFileAccess(): UseFileAccessResult {
   const [fileName, setFileName] = useState<string | null>(null);
-  const [fileHandle, setFileHandle] = useState<any>(null);
+  const [fileHandle, setFileHandle] = useState<
+    FileSystemFileHandle | undefined
+  >(undefined);
   // 常にサポートありとして初期化し、マウント後に確認する
   const [isSupported, setIsSupported] = useState<boolean>(true);
 
@@ -106,6 +108,7 @@ export function useFileAccess(): UseFileAccessResult {
       const saveOptions: SaveOptions = {
         fileName: fileName || "note.yaml",
         extensions: [".yaml", ".yml"],
+        startIn: undefined,
       };
 
       // If we have a file handle, use it

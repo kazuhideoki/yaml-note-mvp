@@ -24,6 +24,7 @@ export interface LogEvent {
   timestamp: number;
   level: LogLevel;
   action: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: Record<string, any>;
   sessionId: string;
 }
@@ -38,6 +39,7 @@ export interface LogEvent {
  * @property {() => string} exportLogs - ログのエクスポート（JSON文字列）
  */
 export interface LoggerContextType {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (level: LogLevel, action: string, details?: Record<string, any>) => void;
   events: LogEvent[];
   clearEvents: () => void;
@@ -82,6 +84,7 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
   const logEvent = (
     level: LogLevel,
     action: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: Record<string, any>,
   ) => {
     const event: LogEvent = {

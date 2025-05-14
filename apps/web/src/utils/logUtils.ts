@@ -63,7 +63,7 @@ export type FormattedError = {
  * @description
  * エラー内容を安全にログやUI表示用に変換する。開発時のみスタックトレースも含める。
  */
-export const formatError = (error: any): FormattedError => {
+export const formatError = (error: Error): FormattedError => {
   if (!error) return { message: "Unknown error", name: "Error" };
 
   const base: FormattedError = {
@@ -105,24 +105,5 @@ export const createPerformanceMarker = (
       start: startTime,
       end: endTime,
     };
-  };
-};
-
-/**
- * 高頻度イベントのスロットル処理
- */
-export const throttle = <T extends (...args: any[]) => any>(
-  func: T,
-  limit: number,
-): ((...args: Parameters<T>) => void) => {
-  let lastCall = 0;
-
-  return (...args: Parameters<T>) => {
-    const now = Date.now();
-
-    if (now - lastCall >= limit) {
-      lastCall = now;
-      func(...args);
-    }
   };
 };
