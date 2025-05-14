@@ -10,6 +10,7 @@ interface CoreWasmType {
   parse_yaml: (yaml: string) => string;
   stringify_yaml: (json: string) => string;
   md_to_yaml: (md: string) => string;
+  md_headings_to_yaml: (md: string) => string; // 追加: 見出し構造を解析してYAML化する関数
   yaml_to_md: (yaml: string) => string;
   parse_and_validate_frontmatter: (md: string) => string;
   version: () => string;
@@ -207,7 +208,7 @@ export function useYamlCore() {
    *
    * @description
    * Markdownの見出し構造をYAML階層構造に変換する。
-   * WASMコアの`md_to_yaml`関数を使用。
+   * WASMコアの`md_headings_to_yaml`関数を使用。
    */
   const markdownToYaml = useCallback(
     async (markdown: string): Promise<string> => {
@@ -216,7 +217,8 @@ export function useYamlCore() {
       }
 
       try {
-        return instance.md_to_yaml(markdown);
+        // md_to_yamlからmd_headings_to_yamlに変更
+        return instance.md_headings_to_yaml(markdown);
       } catch (error) {
         console.error("Markdown to YAML conversion error:", error);
         throw error;

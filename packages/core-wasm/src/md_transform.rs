@@ -133,15 +133,14 @@ fn indent_content(content: &str) -> String {
 /// * `md_str` - Markdown文字列
 ///
 /// # 戻り値
-/// * YAML形式の文字列（階層的に構造化された見出し）
+/// * YAML形式の文字列（スキーマに適合した構造）
 ///
 /// # 動作概要
 /// 1. フロントマターがある場合はそれを除去
 /// 2. Markdownをパースして見出し構造を解析
-/// 3. 見出しレベルに応じた階層構造を構築:
+/// 3. 見出し構造をスキーマに適合した形式に変換:
 ///    - H1 → title フィールド
-///    - H2 → sections 配列の要素
-///    - H3 → sections[].subsections 配列の要素
+///    - H2, H3以下 → sections配列の要素
 /// 4. 得られた構造をYAML文字列にシリアライズ
 pub fn md_headings_to_yaml(md_str: &str) -> String {
     // フロントマターがあれば除去
@@ -149,14 +148,27 @@ pub fn md_headings_to_yaml(md_str: &str) -> String {
     
     let parser = Parser::new(&content_without_frontmatter);
     let mut result = json!({});
+    let mut title_found = false;
+    
+    // セクション構造のためのJSONオブジェクト
     let mut sections = Vec::new();
 
+    // パース状態管理
+    let mut current_section: Option<Value> = None;
     let mut current_level = 0;
     let mut text_buffer = String::new();
+    let mut content_buffer = String::new();
 
     for event in parser {
         match event {
             Event::Start(Tag::Heading(level, ..)) => {
+                // コンテンツバッファがある場合は前のセクションに追加
+                if !content_buffer.is_empty() && current_section.is_some() {
+                    let section = current_section.as_mut().unwrap();
+                    section["content"] = json!(content_buffer.trim());
+                    content_buffer.clear();
+                }
+
                 // 見出しレベルを数値に変換
                 current_level = match level {
                     HeadingLevel::H1 => 1,
@@ -172,55 +184,63 @@ pub fn md_headings_to_yaml(md_str: &str) -> String {
                 text_buffer.push_str(&text);
             },
             Event::End(Tag::Heading(..)) if current_level > 0 => {
-                // 見出しレベルに応じて階層構造を構築
                 match current_level {
                     1 => {
-                        // H1はドキュメントのタイトルとして扱う
-                        result["title"] = json!(text_buffer.trim());
-                    },
-                    2 => {
-                        // H2はトップレベルセクションとして扱う
-                        let section = json!({
-                            "heading": text_buffer.trim(),
-                            "content": ""
-                        });
-                        sections.push(section);
-                    },
-                    3 => {
-                        // H3はサブセクションとして扱う
-                        if !sections.is_empty() {
-                            let last_idx = sections.len() - 1;
-                            let mut section = sections[last_idx].clone();
-
-                            // subsectionsキーがない場合は初期化
-                            if !section.as_object().unwrap().contains_key("subsections") {
-                                section["subsections"] = json!([]);
-                            }
-
-                            let subsection = json!({
-                                "heading": text_buffer.trim(),
-                                "content": ""
-                            });
-
-                            let subsections = section["subsections"].as_array_mut().unwrap();
-                            subsections.push(subsection);
-                            sections[last_idx] = section;
+                        // 最初のH1をタイトルとして設定
+                        if !title_found {
+                            result["title"] = json!(text_buffer.trim());
+                            title_found = true;
                         }
                     },
-                    _ => {
-                        // H4以上は現時点では特に処理しない
-                    }
+                    2..=6 => {
+                        // H2以降はセクションとして処理
+                        if current_section.is_some() && !content_buffer.is_empty() {
+                            let section = current_section.as_mut().unwrap();
+                            section["content"] = json!(content_buffer.trim());
+                            sections.push(section.clone());
+                        }
+                        
+                        // 新しいセクションを開始
+                        let section = json!({
+                            "title": text_buffer.trim(),
+                            "content": ""
+                        });
+                        current_section = Some(section);
+                        content_buffer.clear();
+                    },
+                    _ => {} // 0以下の値は想定外なので無視
                 }
                 text_buffer.clear();
                 current_level = 0;
             },
+            // 見出し以外のコンテンツは現在のセクションに追加
+            Event::Text(text) if current_level == 0 => {
+                content_buffer.push_str(&text);
+            },
+            Event::SoftBreak => {
+                content_buffer.push('\n');
+            },
+            Event::HardBreak => {
+                content_buffer.push_str("\n\n");
+            },
+            // 他のイベントは必要に応じて処理を追加
             _ => {}
         }
     }
 
-    // セクション配列を結果に追加
-    if !sections.is_empty() {
-        result["sections"] = json!(sections);
+    // 最後のセクションを処理
+    if current_section.is_some() {
+        let section = current_section.as_mut().unwrap();
+        section["content"] = json!(content_buffer.trim());
+        sections.push(section.clone());
+    }
+
+    // セクション配列をJSONに追加
+    result["sections"] = json!(sections);
+
+    // タイトルがなければデフォルトタイトルを設定
+    if !title_found {
+        result["title"] = json!("Untitled Document");
     }
 
     // JSONからYAMLに変換
@@ -320,11 +340,19 @@ Nested content"#;
 
         let yaml = md_headings_to_yaml(md);
 
-        // YAML形式チェック
+        // YAML形式チェック - スキーマ互換形式
         assert!(yaml.contains("title: Main Title"));
-        assert!(yaml.contains("heading: Section 1"));
-        assert!(yaml.contains("heading: Section 2"));
-        assert!(yaml.contains("heading: Subsection 2.1"));
+        assert!(yaml.contains("sections:"));
+        
+        // セクションの構造チェック
+        assert!(yaml.contains("- title: Section 1"));
+        assert!(yaml.contains("- title: Section 2"));
+        assert!(yaml.contains("- title: Subsection 2.1"));
+        
+        // コンテンツも含まれていることを確認
+        assert!(yaml.contains("content: Some content"));
+        assert!(yaml.contains("content: More content"));
+        assert!(yaml.contains("content: Nested content"));
     }
 
     #[test]
@@ -333,7 +361,9 @@ Nested content"#;
         let yaml = md_headings_to_yaml(md);
 
         assert!(yaml.contains("title: Only Title"));
-        assert!(!yaml.contains("sections:"));
+        assert!(yaml.contains("sections:"));
+        // セクションは空配列になるはず
+        assert!(yaml.contains("sections: []"));
     }
 
     #[test]
@@ -378,6 +408,9 @@ Content
         
         // 正しく見出し構造が変換されていること
         assert!(yaml.contains("title: Test Document"));
-        assert!(yaml.contains("heading: Section 1"));
+        // セクション構造のチェック
+        assert!(yaml.contains("sections:"));
+        assert!(yaml.contains("- title: Section 1"));
+        assert!(yaml.contains("content: Content"));
     }
 }
