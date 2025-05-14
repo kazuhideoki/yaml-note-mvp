@@ -17,11 +17,12 @@ const extractFrontmatter = (markdown: string) => {
     const colonIndex = line.indexOf(":");
     if (colonIndex !== -1) {
       const key = line.slice(0, colonIndex).trim();
-      let value = line.slice(colonIndex + 1).trim();
-
-      // 値の型変換
-      if (value === "true") value = true;
-      else if (value === "false") value = false;
+      const value =
+        line.slice(colonIndex + 1).trim() === "true"
+          ? true
+          : line.slice(colonIndex + 1).trim() === "false"
+            ? false
+            : line.slice(colonIndex + 1).trim();
 
       frontmatter[key] = value;
     }

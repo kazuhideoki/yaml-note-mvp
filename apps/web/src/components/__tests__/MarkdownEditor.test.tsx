@@ -1,19 +1,24 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import MarkdownEditor from '../MarkdownEditor';
-import { LoggerProvider } from '../../contexts/LoggerContext';
-import * as yamlCore from '../../hooks/useYamlCore';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import MarkdownEditor from "../MarkdownEditor";
+import { LoggerProvider } from "../../contexts/LoggerContext";
+import * as yamlCore from "../../hooks/useYamlCore";
 
 // YamlCoreモックの設定
-jest.mock('../../hooks/useYamlCore', () => ({
-  useYamlCore: jest.fn()
+jest.mock("../../hooks/useYamlCore", () => ({
+  useYamlCore: jest.fn(),
 }));
 
 // CodeMirrorのモック
-jest.mock('@uiw/react-codemirror', () => {
+jest.mock("@uiw/react-codemirror", () => {
   return {
     __esModule: true,
-    default: ({ onChange, value }: { onChange: (value: string) => void, value: string }) => {
+    default: ({
+      onChange,
+      value,
+    }: {
+      onChange: (value: string) => void;
+      value: string;
+    }) => {
       return (
         <textarea
           data-testid="codemirror-mock"
@@ -21,26 +26,26 @@ jest.mock('@uiw/react-codemirror', () => {
           onChange={(e) => onChange(e.target.value)}
         />
       );
-    }
+    },
   };
 });
 
-describe('MarkdownEditor', () => {
+describe("MarkdownEditor", () => {
   beforeEach(() => {
     // モックの初期設定
     (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
-      validateFrontmatter: jest.fn().mockResolvedValue([])
+      validateFrontmatter: jest.fn().mockResolvedValue([]),
     });
   });
 
-  test('正常なマークダウンの場合、エラーバッジが表示されない', async () => {
+  test("正常なマークダウンの場合、エラーバッジが表示されない", async () => {
     render(
       <LoggerProvider>
         <MarkdownEditor />
-      </LoggerProvider>
+      </LoggerProvider>,
     );
 
     // ファイルドロップをシミュレート
@@ -50,43 +55,53 @@ validated: true
 ---
 # タイトル`;
 
-    const file = new File([validMarkdown], 'test.md', { type: 'text/markdown' });
+    const file = new File([validMarkdown], "test.md", {
+      type: "text/markdown",
+    });
     const dataTransfer = {
       files: [file],
-      dropEffect: '',
-      types: ['Files'],
+      dropEffect: "",
+      types: ["Files"],
       setData: jest.fn(),
       getData: jest.fn(),
-      clearData: jest.fn()
+      clearData: jest.fn(),
     };
 
     // ドロップエリアを取得
     const dropArea = screen.getByText(/ドラッグ＆ドロップ/);
-    
+
     // ドロップイベントを発火
     fireEvent.drop(dropArea, { dataTransfer });
 
     // エラーバッジが表示されないことを確認
     await waitFor(() => {
-      expect(screen.queryByText(/バリデーションエラー/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/バリデーションエラー/),
+      ).not.toBeInTheDocument();
     });
   });
 
-  test('不正なフロントマターの場合、エラーバッジが表示される', async () => {
+  test("不正なフロントマターの場合、エラーバッジが表示される", async () => {
     // フロントマターエラーを返すモック
     (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
-      validateFrontmatter: jest.fn().mockResolvedValue([
-        { line: 2, message: 'Frontmatter validation error: Invalid schema_path', path: 'schema_path' }
-      ])
+      validateFrontmatter: jest
+        .fn()
+        .mockResolvedValue([
+          {
+            line: 2,
+            message: "Frontmatter validation error: Invalid schema_path",
+            path: "schema_path",
+          },
+        ]),
     });
 
     render(
       <LoggerProvider>
         <MarkdownEditor />
-      </LoggerProvider>
+      </LoggerProvider>,
     );
 
     // ファイルドロップをシミュレート
@@ -96,19 +111,21 @@ validated: invalid
 ---
 # タイトル`;
 
-    const file = new File([invalidMarkdown], 'invalid.md', { type: 'text/markdown' });
+    const file = new File([invalidMarkdown], "invalid.md", {
+      type: "text/markdown",
+    });
     const dataTransfer = {
       files: [file],
-      dropEffect: '',
-      types: ['Files'],
+      dropEffect: "",
+      types: ["Files"],
       setData: jest.fn(),
       getData: jest.fn(),
-      clearData: jest.fn()
+      clearData: jest.fn(),
     };
 
     // ドロップエリアを取得
     const dropArea = screen.getByText(/ドラッグ＆ドロップ/);
-    
+
     // ドロップイベントを発火
     fireEvent.drop(dropArea, { dataTransfer });
 
@@ -118,72 +135,72 @@ validated: invalid
     });
   });
 
-  test('ファイル以外をドロップした場合は何も起こらない', async () => {
+  test("ファイル以外をドロップした場合は何も起こらない", async () => {
     render(
       <LoggerProvider>
         <MarkdownEditor />
-      </LoggerProvider>
+      </LoggerProvider>,
     );
 
     // 空のdataTransferでドロップ
     const dataTransfer = {
       files: [],
-      dropEffect: '',
-      types: ['text/plain'],
+      dropEffect: "",
+      types: ["text/plain"],
       setData: jest.fn(),
-      getData: jest.fn(() => 'テキスト'),
-      clearData: jest.fn()
+      getData: jest.fn(() => "テキスト"),
+      clearData: jest.fn(),
     };
 
     // ドロップエリアを取得
     const dropArea = screen.getByText(/ドラッグ＆ドロップ/);
-    
+
     // ドロップイベントを発火
     fireEvent.drop(dropArea, { dataTransfer });
 
     // エディタが表示されないことを確認
     await waitFor(() => {
-      expect(screen.queryByTestId('codemirror-mock')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("codemirror-mock")).not.toBeInTheDocument();
     });
   });
 
-  test('WASMが未ロード状態でもエディタは使用可能', async () => {
+  test("WASMが未ロード状態でもエディタは使用可能", async () => {
     // WASMが未ロード状態を模擬
     (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: false,
       wasmLoading: true,
       error: null,
-      validateFrontmatter: jest.fn().mockResolvedValue([])
+      validateFrontmatter: jest.fn().mockResolvedValue([]),
     });
 
     render(
       <LoggerProvider>
         <MarkdownEditor />
-      </LoggerProvider>
+      </LoggerProvider>,
     );
 
     // ファイルドロップをシミュレート
     const markdown = `# テスト`;
 
-    const file = new File([markdown], 'test.md', { type: 'text/markdown' });
+    const file = new File([markdown], "test.md", { type: "text/markdown" });
     const dataTransfer = {
       files: [file],
-      dropEffect: '',
-      types: ['Files'],
+      dropEffect: "",
+      types: ["Files"],
       setData: jest.fn(),
       getData: jest.fn(),
-      clearData: jest.fn()
+      clearData: jest.fn(),
     };
 
     // ドロップエリアを取得
     const dropArea = screen.getByText(/ドラッグ＆ドロップ/);
-    
+
     // ドロップイベントを発火
     fireEvent.drop(dropArea, { dataTransfer });
 
     // エディタが表示されることを確認
     await waitFor(() => {
-      expect(screen.getByTestId('codemirror-mock')).toBeInTheDocument();
+      expect(screen.getByTestId("codemirror-mock")).toBeInTheDocument();
     });
   });
 });

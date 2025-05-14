@@ -14,10 +14,8 @@ interface CoreWasmType {
   yaml_to_md: (yaml: string) => string;
   parse_and_validate_frontmatter: (md: string) => string;
   version: () => string;
+  apply_patch: (yaml: string, patch: string) => string;
 }
-
-// 実際の使用時にはランタイムでモジュールをロード
-let CoreWasm: CoreWasmType;
 
 /**
  * 変換結果の型定義
@@ -58,7 +56,7 @@ export function useYamlCore() {
   useEffect(() => {
     const loadWasm = async () => {
       if (wasmLoaded || wasmLoading) return;
-      
+
       setWasmLoading(true);
       try {
         // 動的インポート
@@ -197,7 +195,7 @@ export function useYamlCore() {
         throw error;
       }
     },
-    [instance, wasmLoaded]
+    [instance, wasmLoaded],
   );
 
   /**

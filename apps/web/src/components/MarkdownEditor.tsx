@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { markdown } from '@codemirror/lang-markdown';
-import { githubLight } from '@uiw/codemirror-theme-github';
-import useValidator from '../hooks/useValidator';
-import ErrorBadge from './ErrorBadge';
-import useLogger from '../hooks/useLogger';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { markdown } from "@codemirror/lang-markdown";
+import { githubLight } from "@uiw/codemirror-theme-github";
+import useValidator from "../hooks/useValidator";
+import ErrorBadge from "./ErrorBadge";
+import useLogger from "../hooks/useLogger";
 
 /**
  * Markdownエディタコンポーネント
@@ -17,21 +17,23 @@ import useLogger from '../hooks/useLogger';
  * フロントマター検証機能を備える。エラー状態の適切な管理とリセットを行う。
  */
 export const MarkdownEditor: React.FC = () => {
-  const [content, setContent] = useState<string>('');
-  const [fileName, setFileName] = useState<string>('');
+  const [content, setContent] = useState<string>("");
   const editorRef = useRef<any>(null);
   const { errors, isValidating, clearErrors } = useValidator(content);
   const { log } = useLogger();
-  const prevContentRef = useRef<string>('');
+  const prevContentRef = useRef<string>("");
 
   // エディタ内容が変更された場合、前回の内容と比較して大きな変更があった場合にエラーを手動クリア
   useEffect(() => {
     if (prevContentRef.current && content) {
       // ファイル内容が完全に変わった場合（別ファイルのロードなど）
-      const contentLengthDiff = Math.abs(content.length - prevContentRef.current.length);
-      if (contentLengthDiff > 100) { // 大きな変更があった場合
+      const contentLengthDiff = Math.abs(
+        content.length - prevContentRef.current.length,
+      );
+      if (contentLengthDiff > 100) {
+        // 大きな変更があった場合
         clearErrors(); // エラー状態を明示的にリセット
-        log('info', 'validation_reset_on_major_change', {
+        log("info", "validation_reset_on_major_change", {
           contentLengthDiff,
         });
       }
@@ -51,48 +53,53 @@ export const MarkdownEditor: React.FC = () => {
       const lineInfo = editorRef.current.view.state.doc.line(line);
       editorRef.current.view.dispatch({
         selection: { anchor: lineInfo.from },
-        scrollIntoView: true
+        scrollIntoView: true,
       });
     }
   }, []);
 
   // ドラッグオーバーハンドラー
-  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
-  }, []);
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    },
+    [],
+  );
 
   // ドロップハンドラー
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
 
-    const file = event.dataTransfer.files[0];
-    if (file && file.name.endsWith('.md')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // ファイルをロードする前にエラーをクリア
-        clearErrors();
-        
-        const content = e.target?.result as string;
-        setContent(content);
-        setFileName(file.name);
+      const file = event.dataTransfer.files[0];
+      if (file && file.name.endsWith(".md")) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // ファイルをロードする前にエラーをクリア
+          clearErrors();
 
-        // ファイル読み込みログ
-        log('info', 'file_loaded', {
-          fileName: file.name,
-          fileSize: file.size,
-          type: 'markdown'
+          const content = e.target?.result as string;
+          setContent(content);
+
+          // ファイル読み込みログ
+          log("info", "file_loaded", {
+            fileName: file.name,
+            fileSize: file.size,
+            type: "markdown",
+          });
+        };
+        reader.readAsText(file);
+      } else {
+        // 非対応ファイル形式のログ
+        log("warn", "unsupported_file", {
+          fileName: file?.name,
+          fileType: file?.type,
         });
-      };
-      reader.readAsText(file);
-    } else {
-      // 非対応ファイル形式のログ
-      log('warn', 'unsupported_file', {
-        fileName: file?.name,
-        fileType: file?.type
-      });
-    }
-  }, [log, clearErrors]);
+      }
+    },
+    [log, clearErrors],
+  );
 
   return (
     <div
@@ -111,10 +118,7 @@ export const MarkdownEditor: React.FC = () => {
             ref={editorRef}
             className="text-base"
           />
-          <ErrorBadge
-            errors={errors}
-            onClick={handleErrorClick}
-          />
+          <ErrorBadge errors={errors} onClick={handleErrorClick} />
           {isValidating && (
             <div className="absolute bottom-4 left-4 bg-gray-800 text-white px-2 py-1 rounded-md text-xs opacity-70">
               検証中...

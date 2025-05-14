@@ -4,16 +4,17 @@
  * スキーマの取得とキャッシュ管理を担当するモジュール
  */
 
-// スキーマキャッシュ
+/**スキーマキャッシュ*/
 const schemaCache: Record<string, { content: string; timestamp: number }> = {};
-const CACHE_TTL = 60000; // キャッシュの有効期限（ミリ秒）
+/**キャッシュの有効期限（ミリ秒）*/
+const CACHE_TTL = 60000;
 
 /**
  * 与えられたパスが絶対パスかどうかを判定する
- * 
+ *
  * @param {string} path - 判定するパス文字列
  * @returns {boolean} 絶対パスの場合true、相対パスの場合false
- * 
+ *
  * @description
  * 先頭が/(Unix系)、C:/やC:\（Windows系）で始まるパス、
  * http://やhttps://（URL）で始まるパスを絶対パスと判定する
@@ -21,17 +22,17 @@ const CACHE_TTL = 60000; // キャッシュの有効期限（ミリ秒）
 export const isAbsolutePath = (path: string): boolean => {
   // 文字列が空か null/undefined の場合は絶対パスではない
   if (!path) return false;
-  
+
   // Unix系絶対パス（/で始まる）
-  if (path.startsWith('/')) return true;
-  
+  if (path.startsWith("/")) return true;
+
   // Windows系絶対パス（C:\やD:/など）
   // ドライブ文字（A-Z）の後に「:」が続く場合
   if (/^[A-Za-z]:\\?/.test(path)) return true;
-  
+
   // URL（http://やhttps://など）
   if (/^[a-z]+:\/\//.test(path)) return true;
-  
+
   // 相対パス
   return false;
 };
@@ -56,7 +57,7 @@ export const fetchSchema = async (
   // 絶対パスのチェック
   if (isAbsolutePath(schemaPath)) {
     throw new Error(
-      `絶対パスでのスキーマ参照はサポートされていません: ${schemaPath}。相対パス（例: "./schema.yaml"）を使用してください。`
+      `絶対パスでのスキーマ参照はサポートされていません: ${schemaPath}。相対パス（例: "./schema.yaml"）を使用してください。`,
     );
   }
 
@@ -73,19 +74,23 @@ export const fetchSchema = async (
   let resolvedPath;
 
   console.log("Schema path resolution:", { schemaPath, basePath });
-  
+
   // ブラウザの制約でbasePathがフルパスでない可能性が高いため
   // 現在のスキーマで相対パスで参照できるようするための特別処理
-  
+
   try {
     // テストモードでは別のパス解決を使用します
-    if (import.meta.env?.MODE === 'test') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((import.meta as any).env?.MODE === "test") {
       if (schemaPath.startsWith("./") && basePath) {
         const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
         resolvedPath = baseDir + schemaPath.substring(2);
       } else if (schemaPath.startsWith("../") && basePath) {
         const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
-        const parentDir = baseDir.substring(0, baseDir.slice(0, -1).lastIndexOf("/") + 1);
+        const parentDir = baseDir.substring(
+          0,
+          baseDir.slice(0, -1).lastIndexOf("/") + 1,
+        );
         resolvedPath = parentDir + schemaPath.substring(3);
       } else if (basePath) {
         const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
@@ -116,7 +121,9 @@ export const fetchSchema = async (
     }
   } catch (error) {
     console.error("Error resolving schema path:", error);
-    throw new Error(`スキーマパスの解決に失敗しました: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `スキーマパスの解決に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 
   try {
