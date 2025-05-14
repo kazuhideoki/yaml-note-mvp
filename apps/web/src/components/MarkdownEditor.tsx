@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -14,14 +14,30 @@ import useLogger from '../hooks/useLogger';
  *
  * @description
  * CodeMirrorベースのMarkdownエディタを提供し、ファイルのドラッグ＆ドロップ、
- * フロントマター検証機能を備える。
+ * フロントマター検証機能を備える。エラー状態の適切な管理とリセットを行う。
  */
 export const MarkdownEditor: React.FC = () => {
   const [content, setContent] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
   const editorRef = useRef<any>(null);
-  const { errors, isValidating } = useValidator(content);
+  const { errors, isValidating, clearErrors } = useValidator(content);
   const { log } = useLogger();
+  const prevContentRef = useRef<string>('');
+
+  // エディタ内容が変更された場合、前回の内容と比較して大きな変更があった場合にエラーを手動クリア
+  useEffect(() => {
+    if (prevContentRef.current && content) {
+      // ファイル内容が完全に変わった場合（別ファイルのロードなど）
+      const contentLengthDiff = Math.abs(content.length - prevContentRef.current.length);
+      if (contentLengthDiff > 100) { // 大きな変更があった場合
+        clearErrors(); // エラー状態を明示的にリセット
+        log('info', 'validation_reset_on_major_change', {
+          contentLengthDiff,
+        });
+      }
+    }
+    prevContentRef.current = content;
+  }, [content, clearErrors, log]);
 
   // CodeMirrorの内容変更ハンドラー
   const handleChange = useCallback((value: string) => {
@@ -54,6 +70,9 @@ export const MarkdownEditor: React.FC = () => {
     if (file && file.name.endsWith('.md')) {
       const reader = new FileReader();
       reader.onload = (e) => {
+        // ファイルをロードする前にエラーをクリア
+        clearErrors();
+        
         const content = e.target?.result as string;
         setContent(content);
         setFileName(file.name);
@@ -73,7 +92,7 @@ export const MarkdownEditor: React.FC = () => {
         fileType: file?.type
       });
     }
-  }, [log]);
+  }, [log, clearErrors]);
 
   return (
     <div

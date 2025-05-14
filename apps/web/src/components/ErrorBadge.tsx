@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ValidationError } from '../hooks/useYaml';
 import useLogger from '../hooks/useLogger';
 
@@ -22,6 +22,7 @@ interface ErrorBadgeProps {
  * エラーが存在する場合のみバッジを表示し、クリックで該当行にジャンプ等のアクションが可能。
  * エラー表示時にはUXログも記録する。
  * エラータイプに応じて色分け表示（赤：フロントマターエラー、今後は黄：スキーマ違反、紫：スキーマ構文エラーを追加予定）
+ * エラーが解消された場合、適切にコンポーネントを非表示にする
  */
 export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   errors,
@@ -29,10 +30,15 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   className = ''
 }) => {
   const { log } = useLogger();
+  const [visible, setVisible] = useState(false);
+  const prevErrorsRef = useRef<ValidationError[]>([]);
 
-  // エラーバッジが表示された時にログを記録
+  // エラーの変更を検出して表示状態を更新
   useEffect(() => {
+    // 新しいエラーがある場合は表示
     if (errors.length > 0) {
+      setVisible(true);
+      
       // エラータイプを集計
       const errorTypes = errors.reduce((acc: Record<string, number>, err) => {
         const type = err.message.includes('Frontmatter') ? 'frontmatter_error' :
@@ -44,15 +50,35 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
         return acc;
       }, {});
 
-      log('warn', 'error_badge_displayed', {
-        errorCount: errors.length,
-        errorTypes,
-        firstErrorLine: errors[0]?.line
-      });
+      // 前回と異なるエラーセットの場合のみログを記録
+      if (JSON.stringify(errors) !== JSON.stringify(prevErrorsRef.current)) {
+        log('warn', 'error_badge_displayed', {
+          errorCount: errors.length,
+          errorTypes,
+          firstErrorLine: errors[0]?.line
+        });
+        
+        // 現在のエラーを保存
+        prevErrorsRef.current = [...errors];
+      }
+    } else {
+      // エラーがなくなった場合は非表示
+      setVisible(false);
+      
+      // エラーが解消された場合にログを記録（前回エラーがあった場合のみ）
+      if (prevErrorsRef.current.length > 0) {
+        log('info', 'errors_resolved', {
+          previousErrorCount: prevErrorsRef.current.length
+        });
+        
+        // エラー参照をクリア
+        prevErrorsRef.current = [];
+      }
     }
   }, [errors, log]);
 
-  if (errors.length === 0) {
+  // 表示されない場合は早期リターン
+  if (!visible || errors.length === 0) {
     return null;
   }
 
@@ -100,7 +126,7 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
         <ul className="text-sm">
           {errors.map((error, index) => (
             <li
-              key={index}
+              key={`error-${index}-${error.line}`}
               className={`mb-1 cursor-pointer hover:bg-red-200 p-1 rounded`}
               onClick={() => handleClick(error.line, error.message)}
             >
