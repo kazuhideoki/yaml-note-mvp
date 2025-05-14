@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { debounce } from "lodash-es";
+import { ValidationError } from "./useYaml";
 
 /**
  * WASMコアモジュールの型定義
@@ -10,6 +11,7 @@ interface CoreWasmType {
   stringify_yaml: (json: string) => string;
   md_to_yaml: (md: string) => string;
   yaml_to_md: (yaml: string) => string;
+  parse_and_validate_frontmatter: (md: string) => string;
   version: () => string;
 }
 
@@ -29,47 +31,61 @@ export interface ConversionResult {
 }
 
 /**
- * YAML/Markdownの相互変換機能を提供するカスタムフック
+ * YAML/Markdownの相互変換機能とバリデーションを提供するカスタムフック
  *
  * @description
- * WASMコアモジュールを利用して、Markdown<->YAML間の変換機能を提供します。
- * 初期化状態の管理や変換処理のデバウンスを内部で行います。
+ * WASMコアモジュールを利用して、Markdown<->YAML間の変換機能およびフロントマターの
+ * バリデーション機能を提供します。初期化状態の管理や処理のデバウンスを内部で行います。
  *
  * @returns {{
- *   isInitialized: boolean;
+ *   wasmLoaded: boolean;
+ *   wasmLoading: boolean;
+ *   error: Error | null;
  *   mdToYaml: (md: string) => Promise<ConversionResult>;
  *   yamlToMd: (yaml: string) => Promise<ConversionResult>;
+ *   validateFrontmatter: (md: string) => Promise<ValidationError[]>;
  * }}
  */
 export function useYamlCore() {
   // WASM初期化状態
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [wasmLoaded, setWasmLoaded] = useState(false);
+  const [wasmLoading, setWasmLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [instance, setInstance] = useState<CoreWasmType | null>(null);
 
   // WASM初期化
   useEffect(() => {
     const loadWasm = async () => {
+      if (wasmLoaded || wasmLoading) return;
+      
+      setWasmLoading(true);
       try {
         // 動的インポート
         const wasmModule = await import("core-wasm");
-        CoreWasm = wasmModule as unknown as CoreWasmType;
+        const coreWasm = wasmModule as unknown as CoreWasmType;
+        setInstance(coreWasm);
 
         // WASMのバージョン確認
-        const version = CoreWasm.version();
+        const version = coreWasm.version();
         console.log(`Core WASM loaded, version: ${version}`);
-        setIsInitialized(true);
-      } catch (error) {
-        console.error("Failed to initialize WASM module:", error);
-        setIsInitialized(false);
+        setWasmLoaded(true);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to initialize WASM module:", err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setWasmLoaded(false);
+      } finally {
+        setWasmLoading(false);
       }
     };
 
     loadWasm();
-  }, []);
+  }, [wasmLoaded, wasmLoading]);
 
   // Markdown -> YAML 変換関数
   const mdToYaml = useCallback(
     debounce(async (md: string): Promise<ConversionResult> => {
-      if (!isInitialized || !CoreWasm) {
+      if (!wasmLoaded || !instance) {
         return {
           success: false,
           content: "",
@@ -82,7 +98,7 @@ export function useYamlCore() {
       }
 
       try {
-        const result = CoreWasm.md_to_yaml(md);
+        const result = instance.md_to_yaml(md);
 
         // エラーチェック（JSONで返ってくる場合はエラー）
         if (result.includes('"success":false')) {
@@ -104,13 +120,13 @@ export function useYamlCore() {
         };
       }
     }, 30), // 30msのデバウンス
-    [isInitialized],
+    [wasmLoaded, instance],
   );
 
   // YAML -> Markdown 変換関数
   const yamlToMd = useCallback(
     debounce(async (yaml: string): Promise<ConversionResult> => {
-      if (!isInitialized || !CoreWasm) {
+      if (!wasmLoaded || !instance) {
         return {
           success: false,
           content: "",
@@ -123,7 +139,7 @@ export function useYamlCore() {
       }
 
       try {
-        const result = CoreWasm.yaml_to_md(yaml);
+        const result = instance.yaml_to_md(yaml);
 
         // エラーチェック
         if (result.includes('"success":false')) {
@@ -145,13 +161,51 @@ export function useYamlCore() {
         };
       }
     }, 30), // 30msのデバウンス
-    [isInitialized],
+    [wasmLoaded, instance],
+  );
+
+  /**
+   * Markdownのフロントマターを検証し、エラーがあれば返す
+   *
+   * @param {string} markdown - 検証対象のMarkdown文字列
+   * @returns {Promise<ValidationError[]>} - 検証エラーの配列（エラーなしなら空配列）
+   */
+  const validateFrontmatter = useCallback(
+    async (markdown: string): Promise<ValidationError[]> => {
+      if (!instance || !wasmLoaded) {
+        throw new Error("WASM module not loaded");
+      }
+
+      try {
+        // WASMコア関数呼び出し
+        const resultJson = instance.parse_and_validate_frontmatter(markdown);
+        const result = JSON.parse(resultJson);
+
+        // 結果をValidationError[]形式に変換
+        if (!result.success) {
+          return result.errors.map((err: any) => ({
+            line: err.line || 0,
+            message: err.message,
+            path: err.path || "",
+          }));
+        }
+
+        return [];
+      } catch (error) {
+        console.error("Error validating frontmatter:", error);
+        throw error;
+      }
+    },
+    [instance, wasmLoaded]
   );
 
   return {
-    isInitialized,
+    wasmLoaded,
+    wasmLoading,
+    error,
     mdToYaml,
     yamlToMd,
+    validateFrontmatter,
   };
 }
 

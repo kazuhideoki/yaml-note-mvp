@@ -12,8 +12,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.3.2",
     "@codemirror/lang-yaml": "^6.1.2",
     "@codemirror/view": "^6.21.0",
+    "@lezer/highlight": "^1.2.1",
+    "@uiw/codemirror-theme-github": "^4.23.12",
     "@uiw/react-codemirror": "^4.23.12",
     "browser-fs-access": "^0.37.0",
     "js-yaml": "^4.1.0",
