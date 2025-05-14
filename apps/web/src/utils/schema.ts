@@ -42,6 +42,10 @@ export const fetchSchema = async (
     const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
     resolvedPath = baseDir + schemaPath.substring(2);
   }
+  // 相対パスだがbasePathがない場合は/schemas/基準で解決
+  else if (schemaPath.startsWith("./")) {
+    resolvedPath = "/schemas/" + schemaPath.substring(2);
+  }
   // 絶対パスの場合（先頭が/で始まる場合）
   else if (schemaPath.startsWith("/")) {
     resolvedPath = schemaPath;

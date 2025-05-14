@@ -1,5 +1,5 @@
 ---
-schema_path: ./schemas/schema.yaml
+schema_path: ./note.schema.yaml
 validated: true
 ---
 
