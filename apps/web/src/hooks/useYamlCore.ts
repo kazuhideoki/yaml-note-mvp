@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { debounce } from "lodash-es";
-import { ValidationError } from "./useYaml";
+import { ValidationError } from "./validation-error.type";
 
 /**
  * WASMコアモジュールの型定義

@@ -1,13 +1,11 @@
-// @ts-ignore React is needed for JSX even if not explicitly used
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import MarkdownPreview from '../MarkdownPreview';
-import { LoggerProvider } from '../../contexts/LoggerContext';
+import { render, screen } from "@testing-library/react";
+import MarkdownPreview from "../MarkdownPreview";
+import { LoggerProvider } from "../../contexts/LoggerContext";
 
-describe('MarkdownPreview', () => {
-  it('renders markdown content correctly', () => {
+describe("MarkdownPreview", () => {
+  it("renders markdown content correctly", () => {
     const markdownContent = `# Heading
-    
+
 This is a paragraph with **bold** and *italic* text.
 
 - List item 1
@@ -18,35 +16,35 @@ This is a paragraph with **bold** and *italic* text.
     render(
       <LoggerProvider>
         <MarkdownPreview content={markdownContent} />
-      </LoggerProvider>
+      </LoggerProvider>,
     );
-    
+
     // Check heading
-    expect(screen.getByText('Heading')).toBeInTheDocument();
-    
+    expect(screen.getByText("Heading")).toBeInTheDocument();
+
     // Check paragraph text (substring match)
     expect(screen.getByText(/This is a paragraph/)).toBeInTheDocument();
-    
+
     // Check list items
-    expect(screen.getByText('List item 1')).toBeInTheDocument();
-    expect(screen.getByText('List item 2')).toBeInTheDocument();
-    
+    expect(screen.getByText("List item 1")).toBeInTheDocument();
+    expect(screen.getByText("List item 2")).toBeInTheDocument();
+
     // Check link
-    const link = screen.getByText('A link');
+    const link = screen.getByText("A link");
     expect(link).toBeInTheDocument();
-    expect(link.tagName.toLowerCase()).toBe('a');
-    expect(link.getAttribute('href')).toBe('https://example.com');
+    expect(link.tagName.toLowerCase()).toBe("a");
+    expect(link.getAttribute("href")).toBe("https://example.com");
   });
 
-  it('applies custom className', () => {
-    const className = 'custom-class';
+  it("applies custom className", () => {
+    const className = "custom-class";
     const { container } = render(
       <LoggerProvider>
         <MarkdownPreview content="" className={className} />
-      </LoggerProvider>
+      </LoggerProvider>,
     );
-    
+
     expect(container.firstChild).toHaveClass(className);
-    expect(container.firstChild).toHaveClass('prose'); // Default Tailwind typography class
+    expect(container.firstChild).toHaveClass("prose"); // Default Tailwind typography class
   });
 });
