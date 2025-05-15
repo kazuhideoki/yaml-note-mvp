@@ -104,6 +104,7 @@ export const useValidator = (markdown: string) => {
 
               // ステップ3: Markdown → YAML変換
               const yaml = await markdownToYaml(markdown);
+              console.log('🔵 yaml', yaml);
 
               // ステップ4: YAML × Schema 検証
               const schemaErrors = await validateYamlWithSchema(yaml, schema);

@@ -6,8 +6,10 @@ properties:
   title:
     type: string
     description: ノートのタイトル
+    pattern: '^[A-Za-z ]+$'
   sections:
     type: array
+    minContains: 3
     items:
       type: object
       required:
