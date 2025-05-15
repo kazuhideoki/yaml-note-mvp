@@ -2,15 +2,15 @@
  * EditorTabs.tsx
  * 2つのエディタタブ（Markdown、Schema）を管理するコンポーネント
  */
-import React, { useCallback } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { yaml } from "@codemirror/lang-yaml";
-import { basicSetup } from "@uiw/react-codemirror";
+import React, { useCallback } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { yaml } from '@codemirror/lang-yaml';
+import { basicSetup } from '@uiw/react-codemirror';
 
 /**
  * タブ種別
  */
-export type TabType = "markdown" | "schema";
+export type TabType = 'markdown' | 'schema';
 
 /**
  * EditorTabsのprops型
@@ -50,18 +50,18 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
   // エディタの言語とコンテンツを取得
   const getEditorContent = () => {
     switch (activeTab) {
-      case "markdown":
+      case 'markdown':
         return markdown;
-      case "schema":
+      case 'schema':
         return schema;
       default:
-        return "";
+        return '';
     }
   };
 
   // CodeMirrorの言語設定
   const getEditorExtensions = () => {
-    if (activeTab === "schema") {
+    if (activeTab === 'schema') {
       return [basicSetup(), yaml()];
     }
     return [basicSetup()];
@@ -72,14 +72,14 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
       {/* タブバー */}
       <div className="flex border-b">
         <button
-          className={`px-4 py-2 ${activeTab === "markdown" ? "border-b-2 border-blue-600 font-bold" : ""}`}
-          onClick={() => onTabChange("markdown")}
+          className={`px-4 py-2 ${activeTab === 'markdown' ? 'border-b-2 border-blue-600 font-bold' : ''}`}
+          onClick={() => onTabChange('markdown')}
         >
           Note.md
         </button>
         <button
-          className={`px-4 py-2 ${activeTab === "schema" ? "border-b-2 border-blue-600 font-bold" : ""}`}
-          onClick={() => onTabChange("schema")}
+          className={`px-4 py-2 ${activeTab === 'schema' ? 'border-b-2 border-blue-600 font-bold' : ''}`}
+          onClick={() => onTabChange('schema')}
         >
           Schema.yaml
         </button>

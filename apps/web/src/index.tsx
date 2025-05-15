@@ -9,5 +9,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <LoggerProvider>
       <App />
     </LoggerProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

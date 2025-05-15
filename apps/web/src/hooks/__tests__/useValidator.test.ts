@@ -5,18 +5,18 @@ import * as schemaUtils from '../../utils/schema';
 
 // モックの設定
 jest.mock('../useYamlCore', () => ({
-  useYamlCore: jest.fn()
+  useYamlCore: jest.fn(),
 }));
 
 jest.mock('../../utils/schema', () => ({
-  fetchSchema: jest.fn()
+  fetchSchema: jest.fn(),
 }));
 
 jest.mock('../useLogger', () => ({
   __esModule: true,
   default: () => ({
-    log: jest.fn()
-  })
+    log: jest.fn(),
+  }),
 }));
 
 describe('useValidator', () => {
@@ -35,7 +35,7 @@ describe('useValidator', () => {
       wasmLoaded: false,
       validateFrontmatter: jest.fn(),
       markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn()
+      validateYamlWithSchema: jest.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
@@ -49,7 +49,7 @@ describe('useValidator', () => {
       wasmLoaded: true,
       validateFrontmatter: jest.fn(),
       markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn()
+      validateYamlWithSchema: jest.fn(),
     });
 
     const { result } = renderHook(() => useValidator(''));
@@ -64,7 +64,7 @@ describe('useValidator', () => {
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn()
+      validateYamlWithSchema: jest.fn(),
     });
 
     const validMarkdown = `---
@@ -89,15 +89,19 @@ validated: true
 
   test('不正なフロントマターの場合、エラー配列を返す', async () => {
     const mockErrors = [
-      { line: 2, message: 'Frontmatter validation error: Invalid schema_path', path: 'schema_path' }
+      {
+        line: 2,
+        message: 'Frontmatter validation error: Invalid schema_path',
+        path: 'schema_path',
+      },
     ];
-    
+
     const validateFrontmatterMock = jest.fn().mockResolvedValue(mockErrors);
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn()
+      validateYamlWithSchema: jest.fn(),
     });
 
     const invalidMarkdown = `---
@@ -127,12 +131,12 @@ validated: invalid
         setTimeout(() => resolve([]), 100);
       });
     });
-    
+
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn()
+      validateYamlWithSchema: jest.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
@@ -159,12 +163,12 @@ validated: invalid
   test('エラーが発生した場合も適切に処理される', async () => {
     const error = new Error('検証エラー');
     const validateFrontmatterMock = jest.fn().mockRejectedValue(error);
-    
+
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn()
+      validateYamlWithSchema: jest.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
@@ -186,23 +190,25 @@ validated: invalid
   test('スキーマ検証エラーが正しく検出される', async () => {
     // モックの準備
     const validateFrontmatterMock = jest.fn().mockResolvedValue([]); // フロントマターは正常
-    const markdownToYamlMock = jest.fn().mockResolvedValue('title: "Test"\ncontent: "Test content"');
+    const markdownToYamlMock = jest
+      .fn()
+      .mockResolvedValue('title: "Test"\ncontent: "Test content"');
     const validateYamlWithSchemaMock = jest.fn().mockResolvedValue([
       {
         line: 2,
         message: 'スキーマ検証エラー: 必須フィールド "description" がありません',
-        path: "",
+        path: '',
       },
     ]);
     const fetchSchemaMock = jest.fn().mockResolvedValue('schema content');
-    
+
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: markdownToYamlMock,
       validateYamlWithSchema: validateYamlWithSchemaMock,
     });
-    
+
     (schemaUtils.fetchSchema as jest.Mock).mockImplementation(fetchSchemaMock);
 
     const markdown = `---
@@ -229,10 +235,10 @@ This is a test content`;
     expect(fetchSchemaMock).toHaveBeenCalledWith('/schemas/test.yaml');
     expect(markdownToYamlMock).toHaveBeenCalledWith(markdown);
     expect(validateYamlWithSchemaMock).toHaveBeenCalledWith(
-      'title: "Test"\ncontent: "Test content"', 
+      'title: "Test"\ncontent: "Test content"',
       'schema content'
     );
-    
+
     expect(result.current.errors).toHaveLength(1);
     expect(result.current.errors[0].message).toContain('スキーマ検証エラー');
     expect(result.current.schemaPath).toBe('/schemas/test.yaml');
@@ -245,14 +251,14 @@ This is a test content`;
     const markdownToYamlMock = jest.fn();
     const validateYamlWithSchemaMock = jest.fn();
     const fetchSchemaMock = jest.fn();
-    
+
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: markdownToYamlMock,
       validateYamlWithSchema: validateYamlWithSchemaMock,
     });
-    
+
     (schemaUtils.fetchSchema as jest.Mock).mockImplementation(fetchSchemaMock);
 
     const markdown = `---
@@ -276,7 +282,7 @@ validated: false
     expect(fetchSchemaMock).not.toHaveBeenCalled();
     expect(markdownToYamlMock).not.toHaveBeenCalled();
     expect(validateYamlWithSchemaMock).not.toHaveBeenCalled();
-    
+
     expect(result.current.schemaPath).toBe('/schemas/test.yaml');
     expect(result.current.validated).toBe(false);
   });
@@ -284,15 +290,17 @@ validated: false
   test('スキーマ取得エラー時は適切にエラーを表示する', async () => {
     // モックの準備
     const validateFrontmatterMock = jest.fn().mockResolvedValue([]);
-    const fetchSchemaMock = jest.fn().mockRejectedValue(new Error('スキーマファイルが見つかりません'));
-    
+    const fetchSchemaMock = jest
+      .fn()
+      .mockRejectedValue(new Error('スキーマファイルが見つかりません'));
+
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: jest.fn(),
       validateYamlWithSchema: jest.fn(),
     });
-    
+
     (schemaUtils.fetchSchema as jest.Mock).mockImplementation(fetchSchemaMock);
 
     const markdown = `---
@@ -314,7 +322,7 @@ validated: true
 
     expect(validateFrontmatterMock).toHaveBeenCalledWith(markdown);
     expect(fetchSchemaMock).toHaveBeenCalledWith('/invalid/schema.yaml');
-    
+
     expect(result.current.errors).toHaveLength(1);
     expect(result.current.errors[0].message).toContain('スキーマ検証エラー');
     expect(result.current.errors[0].message).toContain('スキーマファイルが見つかりません');
@@ -322,10 +330,10 @@ validated: true
 
   test('clearErrorsは正しくエラーをクリアする', async () => {
     // 最初にエラーがある状態を設定
-    const validateFrontmatterMock = jest.fn().mockResolvedValue([
-      { line: 1, message: 'テストエラー', path: '' }
-    ]);
-    
+    const validateFrontmatterMock = jest
+      .fn()
+      .mockResolvedValue([{ line: 1, message: 'テストエラー', path: '' }]);
+
     (useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,

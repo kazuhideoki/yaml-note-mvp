@@ -16,11 +16,16 @@ const ValidationBanner: React.FC<ValidationBannerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className={`bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 ${className}`} role="alert">
+    <div
+      className={`bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 ${className}`}
+      role="alert"
+    >
       <div className="flex items-center justify-between">
         <div>
           <div className="font-medium">バリデーション無効モード</div>
-          <p>スキーマ検証が無効になっています。このモードではスキーマ編集が可能ですが、YAMLのエラーチェックは行われません。</p>
+          <p>
+            スキーマ検証が無効になっています。このモードではスキーマ編集が可能ですが、YAMLのエラーチェックは行われません。
+          </p>
         </div>
         <div className="flex space-x-2">
           {onEnable && (
@@ -46,4 +51,3 @@ const ValidationBanner: React.FC<ValidationBannerProps> = ({
 };
 
 export default ValidationBanner;
-

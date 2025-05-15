@@ -35,4 +35,3 @@ const ValidationToggle: React.FC<ValidationToggleProps> = ({
 };
 
 export default ValidationToggle;
-

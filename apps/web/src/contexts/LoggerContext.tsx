@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { v4 as uuidv4 } from "uuid";
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 // ログレベルの定義
 /**
@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
  * - warn: 警告
  * - error: エラー
  */
-export type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 // ログイベント構造の定義
 /**
@@ -64,9 +64,7 @@ export const LoggerContext = createContext<LoggerContextType | null>(null);
  * @param {object} props
  * @param {ReactNode} props.children - Provider配下でログ機能を利用可能にする
  */
-export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<LogEvent[]>([]);
   // セッションIDはコンポーネントマウント時に1回だけ生成
   const [sessionId] = useState<string>(() => uuidv4());
@@ -85,7 +83,7 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
     level: LogLevel,
     action: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    details?: Record<string, any>,
+    details?: Record<string, any>
   ) => {
     const event: LogEvent = {
       timestamp: Date.now(),
@@ -95,11 +93,11 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
       sessionId,
     };
 
-    setEvents((prev) => [...prev, event]);
+    setEvents(prev => [...prev, event]);
 
     // 開発環境ではコンソールにも出力
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[${level.toUpperCase()}] ${action}`, details || "");
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[${level.toUpperCase()}] ${action}`, details || '');
     }
   };
 
@@ -111,9 +109,7 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
   // ログをエクスポートする関数
   const exportLogs = (): string => {
     // ストレージから全てのログを取得
-    const storedLogs = JSON.parse(
-      localStorage.getItem("yaml_note_logs") || "[]",
-    );
+    const storedLogs = JSON.parse(localStorage.getItem('yaml_note_logs') || '[]');
     // 現在のイベントと結合
     const allLogs = [...storedLogs, ...events];
     // JSONとして出力
@@ -124,11 +120,11 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
   // ログ更新のたびにログを記録することになっている。
   // TODO: 適切なタイミングで更新できるよう修正
   useEffect(() => {
-    logEvent("info", "session_start", { platformInfo });
+    logEvent('info', 'session_start', { platformInfo });
 
     // セッション終了時のクリーンアップ
     return () => {
-      logEvent("info", "session_end", {
+      logEvent('info', 'session_end', {
         duration: Date.now() - events[0]?.timestamp || 0,
         eventCount: events.length,
       });
@@ -142,18 +138,13 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
     const saveInterval = setInterval(() => {
       if (events.length > 0) {
         // 過去のログと結合
-        const storedLogs = JSON.parse(
-          localStorage.getItem("yaml_note_logs") || "[]",
-        );
-        const updatedLogs = [
-          ...storedLogs,
-          ...events.filter((e) => e.level !== "debug"),
-        ]; // debugレベルは保存しない
+        const storedLogs = JSON.parse(localStorage.getItem('yaml_note_logs') || '[]');
+        const updatedLogs = [...storedLogs, ...events.filter(e => e.level !== 'debug')]; // debugレベルは保存しない
 
         // サイズ制限（例: 最新500件のみ保持）
         const trimmedLogs = updatedLogs.slice(-500);
 
-        localStorage.setItem("yaml_note_logs", JSON.stringify(trimmedLogs));
+        localStorage.setItem('yaml_note_logs', JSON.stringify(trimmedLogs));
         clearEvents(); // メモリ内のログをクリア
       }
     }, 60000); // 1分ごと
@@ -171,9 +162,5 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({
     exportLogs,
   };
 
-  return (
-    <LoggerContext.Provider value={contextValue}>
-      {children}
-    </LoggerContext.Provider>
-  );
+  return <LoggerContext.Provider value={contextValue}>{children}</LoggerContext.Provider>;
 };

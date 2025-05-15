@@ -1,25 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
-import { ValidationError } from "./validation-error.type";
-import { useYamlCore } from "./useYamlCore";
-import { fetchSchema } from "../utils/schema";
-import useLogger from "./useLogger";
+import { useState, useEffect, useCallback } from 'react';
+import { ValidationError } from './validation-error.type';
+import { useYamlCore } from './useYamlCore';
+import { fetchSchema } from '../utils/schema';
+import useLogger from './useLogger';
 
 // フロントマター抽出ユーティリティ
 const extractFrontmatter = (markdown: string) => {
   const match = markdown.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return null;
 
-  const frontmatterLines = match[1].split("\n");
+  const frontmatterLines = match[1].split('\n');
   const frontmatter: Record<string, any> = {};
 
-  frontmatterLines.forEach((line) => {
-    const colonIndex = line.indexOf(":");
+  frontmatterLines.forEach(line => {
+    const colonIndex = line.indexOf(':');
     if (colonIndex !== -1) {
       const key = line.slice(0, colonIndex).trim();
       const value =
-        line.slice(colonIndex + 1).trim() === "true"
+        line.slice(colonIndex + 1).trim() === 'true'
           ? true
-          : line.slice(colonIndex + 1).trim() === "false"
+          : line.slice(colonIndex + 1).trim() === 'false'
             ? false
             : line.slice(colonIndex + 1).trim();
 
@@ -53,19 +53,14 @@ export const useValidator = (markdown: string) => {
   const [schemaPath, setSchemaPath] = useState<string | null>(null);
   const [validated, setValidated] = useState<boolean>(true);
 
-  const {
-    wasmLoaded,
-    validateFrontmatter,
-    markdownToYaml,
-    validateYamlWithSchema,
-  } = useYamlCore();
+  const { wasmLoaded, validateFrontmatter, markdownToYaml, validateYamlWithSchema } = useYamlCore();
 
   const { log } = useLogger();
 
   // エラーを手動でクリアする関数
   const clearErrors = useCallback(() => {
     setErrors([]);
-    log("info", "errors_manually_cleared", {
+    log('info', 'errors_manually_cleared', {
       previousErrorCount: errors.length,
     });
   }, [errors.length, log]);
@@ -117,13 +112,11 @@ export const useValidator = (markdown: string) => {
               allErrors = [...allErrors, ...schemaErrors];
             } catch (schemaError) {
               const errorMessage =
-                schemaError instanceof Error
-                  ? schemaError.message
-                  : String(schemaError);
+                schemaError instanceof Error ? schemaError.message : String(schemaError);
 
               // 絶対パスエラーの場合は特別なエラーメッセージを表示
               const isAbsolutePathError = errorMessage.includes(
-                "絶対パスでのスキーマ参照はサポートされていません",
+                '絶対パスでのスキーマ参照はサポートされていません'
               );
 
               allErrors.push({
@@ -131,19 +124,13 @@ export const useValidator = (markdown: string) => {
                 message: isAbsolutePathError
                   ? `スキーマパスエラー: ${errorMessage}`
                   : `スキーマ検証エラー: ${errorMessage}`,
-                path: isAbsolutePathError ? "schema_path" : "",
+                path: isAbsolutePathError ? 'schema_path' : '',
               });
 
-              log(
-                "error",
-                isAbsolutePathError
-                  ? "schema_path_error"
-                  : "schema_validation_error",
-                {
-                  error: errorMessage,
-                  schemaPath: currentSchemaPath,
-                },
-              );
+              log('error', isAbsolutePathError ? 'schema_path_error' : 'schema_validation_error', {
+                error: errorMessage,
+                schemaPath: currentSchemaPath,
+              });
             }
           }
         }
@@ -153,26 +140,26 @@ export const useValidator = (markdown: string) => {
 
         // パフォーマンスログ
         const validationTime = performance.now() - startTime;
-        log("info", "validation_time", {
-          component: "useValidator",
+        log('info', 'validation_time', {
+          component: 'useValidator',
           timeMs: validationTime.toFixed(2),
           hasErrors: allErrors.length > 0,
-          phase: "S3",
+          phase: 'S3',
         });
       } catch (error) {
-        console.error("Validation error:", error);
+        console.error('Validation error:', error);
 
         // エラーをUIに表示できる形式に変換
         setErrors([
           {
             line: 0,
             message: `検証エラー: ${error instanceof Error ? error.message : String(error)}`,
-            path: "",
+            path: '',
           },
         ]);
 
         // エラーログ
-        log("error", "validation_error", {
+        log('error', 'validation_error', {
           error: error instanceof Error ? error.message : String(error),
         });
       } finally {
@@ -182,14 +169,7 @@ export const useValidator = (markdown: string) => {
 
     // クリーンアップ
     return () => clearTimeout(timerId);
-  }, [
-    markdown,
-    wasmLoaded,
-    validateFrontmatter,
-    markdownToYaml,
-    validateYamlWithSchema,
-    log,
-  ]);
+  }, [markdown, wasmLoaded, validateFrontmatter, markdownToYaml, validateYamlWithSchema, log]);
 
   return { errors, isValidating, schemaPath, validated, clearErrors };
 };

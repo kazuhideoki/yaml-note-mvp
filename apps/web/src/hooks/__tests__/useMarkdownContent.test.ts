@@ -13,7 +13,7 @@ content: |
 `;
 
     const { result } = renderHook(() => useMarkdownContent(validYaml));
-    
+
     expect(result.current.markdownContent).toContain('# Test Heading');
     expect(result.current.markdownContent).toContain('This is a test paragraph.');
     expect(result.current.error).toBeNull();
@@ -26,7 +26,7 @@ description: This YAML doesn't have a content field
 `;
 
     const { result } = renderHook(() => useMarkdownContent(invalidYaml));
-    
+
     expect(result.current.markdownContent).toBe('');
     expect(result.current.error).toBe('YAMLにcontentフィールドが見つかりません');
   });
@@ -40,7 +40,7 @@ invalid indentation
 `;
 
     const { result } = renderHook(() => useMarkdownContent(invalidYaml));
-    
+
     expect(result.current.markdownContent).toBe('');
     expect(result.current.error).toContain('YAMLのパースに失敗しました');
   });

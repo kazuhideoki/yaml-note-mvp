@@ -32,15 +32,15 @@ export const summarizeContent = (content: string): string => {
   const byteLength = new Blob([content]).size;
 
   // 行数とバイト数を含む概要情報のみ返す
-  const lineCount = content.split("\n").length;
+  const lineCount = content.split('\n').length;
 
   const summary: ContentSummary = {
     byteLength,
     lineCount,
-    hasTitle: content.includes("title:"),
-    hasContent: content.includes("content:"),
-    hasTags: content.includes("tags:"),
-    hasFrontmatter: content.includes("---"),
+    hasTitle: content.includes('title:'),
+    hasContent: content.includes('content:'),
+    hasTags: content.includes('tags:'),
+    hasFrontmatter: content.includes('---'),
   };
   return JSON.stringify(summary);
 };
@@ -64,13 +64,13 @@ export type FormattedError = {
  * エラー内容を安全にログやUI表示用に変換する。開発時のみスタックトレースも含める。
  */
 export const formatError = (error: Error): FormattedError => {
-  if (!error) return { message: "Unknown error", name: "Error" };
+  if (!error) return { message: 'Unknown error', name: 'Error' };
 
   const base: FormattedError = {
-    message: error.message || "No message",
-    name: error.name || "Error",
+    message: error.message || 'No message',
+    name: error.name || 'Error',
   };
-  if (process.env.NODE_ENV === "development" && error.stack) {
+  if (process.env.NODE_ENV === 'development' && error.stack) {
     base.stack = error.stack;
   }
   return base;
@@ -92,9 +92,7 @@ export type PerformanceResult = {
  * @param actionName アクション名
  * @returns 計測終了関数（呼び出すと計測結果を返す）
  */
-export const createPerformanceMarker = (
-  actionName: string,
-): (() => PerformanceResult) => {
+export const createPerformanceMarker = (actionName: string): (() => PerformanceResult) => {
   const startTime = performance.now();
 
   return () => {

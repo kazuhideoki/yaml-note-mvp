@@ -24,7 +24,7 @@ export const isAbsolutePath = (path: string): boolean => {
   if (!path) return false;
 
   // Unix系絶対パス（/で始まる）
-  if (path.startsWith("/")) return true;
+  if (path.startsWith('/')) return true;
 
   // Windows系絶対パス（C:\やD:/など）
   // ドライブ文字（A-Z）の後に「:」が続く場合
@@ -50,20 +50,17 @@ export const isAbsolutePath = (path: string): boolean => {
  * キャッシュ有効期限内であればキャッシュから返す。
  * 絶対パスは受け付けず、相対パスのみをサポートする。
  */
-export const fetchSchema = async (
-  schemaPath: string,
-  basePath?: string,
-): Promise<string> => {
+export const fetchSchema = async (schemaPath: string, basePath?: string): Promise<string> => {
   // 絶対パスのチェック
   if (isAbsolutePath(schemaPath)) {
     throw new Error(
-      `絶対パスでのスキーマ参照はサポートされていません: ${schemaPath}。相対パス（例: "./schema.yaml"）を使用してください。`,
+      `絶対パスでのスキーマ参照はサポートされていません: ${schemaPath}。相対パス（例: "./schema.yaml"）を使用してください。`
     );
   }
 
   // キャッシュチェック（有効期限内）
   const now = Date.now();
-  const cacheKey = `${basePath || ""}:${schemaPath}`;
+  const cacheKey = `${basePath || ''}:${schemaPath}`;
   const cached = schemaCache[cacheKey];
 
   if (cached && now - cached.timestamp < CACHE_TTL) {
@@ -73,7 +70,7 @@ export const fetchSchema = async (
   // スキーマパス解決
   let resolvedPath;
 
-  console.log("Schema path resolution:", { schemaPath, basePath });
+  console.log('Schema path resolution:', { schemaPath, basePath });
 
   // ブラウザの制約でbasePathがフルパスでない可能性が高いため
   // 現在のスキーマで相対パスで参照できるようするための特別処理
@@ -81,19 +78,16 @@ export const fetchSchema = async (
   try {
     // テストモードでは別のパス解決を使用します
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((import.meta as any).env?.MODE === "test") {
-      if (schemaPath.startsWith("./") && basePath) {
-        const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
+    if ((import.meta as any).env?.MODE === 'test') {
+      if (schemaPath.startsWith('./') && basePath) {
+        const baseDir = basePath.substring(0, basePath.lastIndexOf('/') + 1);
         resolvedPath = baseDir + schemaPath.substring(2);
-      } else if (schemaPath.startsWith("../") && basePath) {
-        const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
-        const parentDir = baseDir.substring(
-          0,
-          baseDir.slice(0, -1).lastIndexOf("/") + 1,
-        );
+      } else if (schemaPath.startsWith('../') && basePath) {
+        const baseDir = basePath.substring(0, basePath.lastIndexOf('/') + 1);
+        const parentDir = baseDir.substring(0, baseDir.slice(0, -1).lastIndexOf('/') + 1);
         resolvedPath = parentDir + schemaPath.substring(3);
       } else if (basePath) {
-        const baseDir = basePath.substring(0, basePath.lastIndexOf("/") + 1);
+        const baseDir = basePath.substring(0, basePath.lastIndexOf('/') + 1);
         resolvedPath = baseDir + schemaPath;
       } else {
         resolvedPath = `./${schemaPath}`;
@@ -101,28 +95,28 @@ export const fetchSchema = async (
     } else {
       // ブラウザ環境（通常モード）
       // 明示的な相対パスの場合（./で始まる）
-      if (schemaPath.startsWith("./")) {
+      if (schemaPath.startsWith('./')) {
         // ./schema.yaml → /sample/schema.yaml のようにサンプルディレクトリからの相対パスとして解決
         resolvedPath = `/sample/${schemaPath.substring(2)}`;
-        console.log("Resolved explicit relative path:", resolvedPath);
+        console.log('Resolved explicit relative path:', resolvedPath);
       }
       // 親ディレクトリ参照の相対パス（../で始まる）
-      else if (schemaPath.startsWith("../")) {
+      else if (schemaPath.startsWith('../')) {
         // ../schema.yaml → /schema.yaml のようにプロジェクトルートからの相対パスとして解決
         resolvedPath = `/${schemaPath.substring(3)}`;
-        console.log("Resolved parent directory path:", resolvedPath);
+        console.log('Resolved parent directory path:', resolvedPath);
       }
       // 暗黙的な相対パス（./なしで始まる）
       else {
         // schema.yaml → /sample/schema.yaml のようにサンプルディレクトリからの相対パスとして解決
         resolvedPath = `/sample/${schemaPath}`;
-        console.log("Resolved implicit relative path:", resolvedPath);
+        console.log('Resolved implicit relative path:', resolvedPath);
       }
     }
   } catch (error) {
-    console.error("Error resolving schema path:", error);
+    console.error('Error resolving schema path:', error);
     throw new Error(
-      `スキーマパスの解決に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
+      `スキーマパスの解決に失敗しました: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
@@ -131,9 +125,7 @@ export const fetchSchema = async (
     const response = await fetch(resolvedPath);
 
     if (!response.ok) {
-      throw new Error(
-        `スキーマの取得に失敗: ${resolvedPath} (${response.status})`,
-      );
+      throw new Error(`スキーマの取得に失敗: ${resolvedPath} (${response.status})`);
     }
 
     const schemaContent = await response.text();
@@ -148,7 +140,7 @@ export const fetchSchema = async (
   } catch (error) {
     console.error(`スキーマ読み込みエラー: ${resolvedPath}`, error);
     throw new Error(
-      `スキーマの読み込みに失敗: ${error instanceof Error ? error.message : String(error)}`,
+      `スキーマの読み込みに失敗: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 };
@@ -159,11 +151,8 @@ export const fetchSchema = async (
  * @param {string} schemaPath - 削除するスキーマのパス
  * @param {string} basePath - 相対パス解決のためのベースパス（オプション）
  */
-export const invalidateSchemaCache = (
-  schemaPath: string,
-  basePath?: string,
-): void => {
-  const cacheKey = `${basePath || ""}:${schemaPath}`;
+export const invalidateSchemaCache = (schemaPath: string, basePath?: string): void => {
+  const cacheKey = `${basePath || ''}:${schemaPath}`;
   delete schemaCache[cacheKey];
 };
 
@@ -171,5 +160,5 @@ export const invalidateSchemaCache = (
  * キャッシュ全体をクリア
  */
 export const clearSchemaCache = (): void => {
-  Object.keys(schemaCache).forEach((key) => delete schemaCache[key]);
+  Object.keys(schemaCache).forEach(key => delete schemaCache[key]);
 };

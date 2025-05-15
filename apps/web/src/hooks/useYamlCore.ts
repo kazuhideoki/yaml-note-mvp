@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { debounce } from "lodash-es";
-import { ValidationError } from "./validation-error.type";
+import { useState, useEffect, useCallback } from 'react';
+import { debounce } from 'lodash-es';
+import { ValidationError } from './validation-error.type';
 
 /**
  * WASMコアモジュールの型定義
@@ -60,7 +60,7 @@ export function useYamlCore() {
       setWasmLoading(true);
       try {
         // 動的インポート
-        const wasmModule = await import("core-wasm");
+        const wasmModule = await import('core-wasm');
         const coreWasm = wasmModule as unknown as CoreWasmType;
         setInstance(coreWasm);
 
@@ -70,7 +70,7 @@ export function useYamlCore() {
         setWasmLoaded(true);
         setError(null);
       } catch (err) {
-        console.error("Failed to initialize WASM module:", err);
+        console.error('Failed to initialize WASM module:', err);
         setError(err instanceof Error ? err : new Error(String(err)));
         setWasmLoaded(false);
       } finally {
@@ -87,13 +87,13 @@ export function useYamlCore() {
       if (!wasmLoaded || !instance) {
         return {
           success: false,
-          content: "",
-          error: "WASM not initialized",
+          content: '',
+          error: 'WASM not initialized',
         };
       }
 
       if (!md.trim()) {
-        return { success: true, content: "" };
+        return { success: true, content: '' };
       }
 
       try {
@@ -104,22 +104,22 @@ export function useYamlCore() {
           const errorObj = JSON.parse(result);
           return {
             success: false,
-            content: "",
-            error: errorObj.errors?.[0]?.message || "Unknown error",
+            content: '',
+            error: errorObj.errors?.[0]?.message || 'Unknown error',
           };
         }
 
         return { success: true, content: result };
       } catch (error) {
-        console.error("MD to YAML conversion error:", error);
+        console.error('MD to YAML conversion error:', error);
         return {
           success: false,
-          content: "",
+          content: '',
           error: `変換エラー: ${error}`,
         };
       }
     }, 30), // 30msのデバウンス
-    [wasmLoaded, instance],
+    [wasmLoaded, instance]
   );
 
   // YAML -> Markdown 変換関数
@@ -128,13 +128,13 @@ export function useYamlCore() {
       if (!wasmLoaded || !instance) {
         return {
           success: false,
-          content: "",
-          error: "WASM not initialized",
+          content: '',
+          error: 'WASM not initialized',
         };
       }
 
       if (!yaml.trim()) {
-        return { success: true, content: "" };
+        return { success: true, content: '' };
       }
 
       try {
@@ -145,22 +145,22 @@ export function useYamlCore() {
           const errorObj = JSON.parse(result);
           return {
             success: false,
-            content: "",
-            error: errorObj.errors?.[0]?.message || "Unknown error",
+            content: '',
+            error: errorObj.errors?.[0]?.message || 'Unknown error',
           };
         }
 
         return { success: true, content: result };
       } catch (error) {
-        console.error("YAML to MD conversion error:", error);
+        console.error('YAML to MD conversion error:', error);
         return {
           success: false,
-          content: "",
+          content: '',
           error: `変換エラー: ${error}`,
         };
       }
     }, 30), // 30msのデバウンス
-    [wasmLoaded, instance],
+    [wasmLoaded, instance]
   );
 
   /**
@@ -172,7 +172,7 @@ export function useYamlCore() {
   const validateFrontmatter = useCallback(
     async (markdown: string): Promise<ValidationError[]> => {
       if (!instance || !wasmLoaded) {
-        throw new Error("WASM module not loaded");
+        throw new Error('WASM module not loaded');
       }
 
       try {
@@ -185,17 +185,17 @@ export function useYamlCore() {
           return result.errors.map((err: any) => ({
             line: err.line || 0,
             message: err.message,
-            path: err.path || "",
+            path: err.path || '',
           }));
         }
 
         return [];
       } catch (error) {
-        console.error("Error validating frontmatter:", error);
+        console.error('Error validating frontmatter:', error);
         throw error;
       }
     },
-    [instance, wasmLoaded],
+    [instance, wasmLoaded]
   );
 
   /**
@@ -211,18 +211,18 @@ export function useYamlCore() {
   const markdownToYaml = useCallback(
     async (markdown: string): Promise<string> => {
       if (!instance || !wasmLoaded) {
-        throw new Error("WASM module not loaded");
+        throw new Error('WASM module not loaded');
       }
 
       try {
         // md_to_yamlからmd_headings_to_yamlに変更
         return instance.md_headings_to_yaml(markdown);
       } catch (error) {
-        console.error("Markdown to YAML conversion error:", error);
+        console.error('Markdown to YAML conversion error:', error);
         throw error;
       }
     },
-    [instance, wasmLoaded],
+    [instance, wasmLoaded]
   );
 
   /**
@@ -239,7 +239,7 @@ export function useYamlCore() {
   const validateYamlWithSchema = useCallback(
     async (yaml: string, schema: string): Promise<ValidationError[]> => {
       if (!instance || !wasmLoaded) {
-        throw new Error("WASM module not loaded");
+        throw new Error('WASM module not loaded');
       }
 
       try {
@@ -250,17 +250,17 @@ export function useYamlCore() {
           return result.errors.map((err: any) => ({
             line: err.line || 0,
             message: `スキーマ検証エラー: ${err.message}`,
-            path: err.path || "",
+            path: err.path || '',
           }));
         }
 
         return [];
       } catch (error) {
-        console.error("YAML schema validation error:", error);
+        console.error('YAML schema validation error:', error);
         throw error;
       }
     },
-    [instance, wasmLoaded],
+    [instance, wasmLoaded]
   );
 
   /**
@@ -273,17 +273,17 @@ export function useYamlCore() {
   const applyPatch = useCallback(
     async (yaml: string, patch: string): Promise<string> => {
       if (!instance || !wasmLoaded) {
-        throw new Error("WASM module not loaded");
+        throw new Error('WASM module not loaded');
       }
 
       try {
         return instance.apply_patch(yaml, patch);
       } catch (error) {
-        console.error("YAML patch application error:", error);
+        console.error('YAML patch application error:', error);
         throw error;
       }
     },
-    [instance, wasmLoaded],
+    [instance, wasmLoaded]
   );
 
   return {

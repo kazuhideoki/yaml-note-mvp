@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import * as yaml from "js-yaml";
+import { useState, useEffect } from 'react';
+import * as yaml from 'js-yaml';
 
 /**
  * useMarkdownContentの返却型
@@ -22,10 +22,8 @@ export interface UseMarkdownContentResult {
  * @description
  * YAMLをパースし、contentフィールドをMarkdownとして抽出。パース失敗やcontent未検出時はエラーを返す。
  */
-export function useMarkdownContent(
-  yamlString: string,
-): UseMarkdownContentResult {
-  const [markdownContent, setMarkdownContent] = useState<string>("");
+export function useMarkdownContent(yamlString: string): UseMarkdownContentResult {
+  const [markdownContent, setMarkdownContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,16 +32,16 @@ export function useMarkdownContent(
       const parsed = yaml.load(yamlString);
 
       // contentフィールドを抽出
-      if (parsed && typeof parsed === "object" && "content" in parsed) {
+      if (parsed && typeof parsed === 'object' && 'content' in parsed) {
         setMarkdownContent(String(parsed.content));
         setError(null);
       } else {
-        setMarkdownContent("");
-        setError("YAMLにcontentフィールドが見つかりません");
+        setMarkdownContent('');
+        setError('YAMLにcontentフィールドが見つかりません');
       }
     } catch (err) {
-      console.error("YAMLパースエラー:", err);
-      setMarkdownContent("");
+      console.error('YAMLパースエラー:', err);
+      setMarkdownContent('');
       setError(`YAMLのパースに失敗しました: ${err}`);
     }
   }, [yamlString]);

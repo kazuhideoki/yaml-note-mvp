@@ -5,9 +5,9 @@
  *              V3仕様に基づき、Markdownを唯一の編集・保存フォーマットとして扱う。
  */
 
-import React from "react";
-import MarkdownEditor from "./components/MarkdownEditor";
-import { LoggerProvider } from "./contexts/LoggerContext";
+import React from 'react';
+import MarkdownEditor from './components/MarkdownEditor';
+import { LoggerProvider } from './contexts/LoggerContext';
 /**
  * YAML Note MVPのメインアプリケーションコンポーネント
  *

@@ -4,7 +4,7 @@ const VALIDATION_ENABLED_KEY = 'yaml-note-validation-enabled';
 
 /**
  * バリデーション有効/無効を切り替えるためのフック
- * 
+ *
  * @returns {{
  *   isValidationEnabled: boolean;
  *   toggleValidation: () => void;
@@ -43,9 +43,8 @@ export function useValidationToggle(initialState: boolean = true) {
     isValidationEnabled,
     toggleValidation,
     enableValidation,
-    disableValidation
+    disableValidation,
   };
 }
 
 export default useValidationToggle;
-
