@@ -2,16 +2,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MarkdownEditor from '../MarkdownEditor';
 import { LoggerProvider } from '../../contexts/LoggerContext';
 import * as yamlCore from '../../hooks/useYamlCore';
+import { vi, beforeEach, describe, test, expect } from 'vitest';
 
 // YamlCoreモックの設定
-jest.mock('../../hooks/useYamlCore', () => ({
-  useYamlCore: jest.fn(),
+vi.mock('../../hooks/useYamlCore', () => ({
+  useYamlCore: vi.fn(),
 }));
 
 // CodeMirrorのモック
-jest.mock('@uiw/react-codemirror', () => {
+vi.mock('@uiw/react-codemirror', () => {
   return {
-    __esModule: true,
     default: ({ onChange, value }: { onChange: (value: string) => void; value: string }) => {
       return (
         <textarea
@@ -27,11 +27,11 @@ jest.mock('@uiw/react-codemirror', () => {
 describe('MarkdownEditor', () => {
   beforeEach(() => {
     // モックの初期設定
-    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
+    (yamlCore.useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
-      validateFrontmatter: jest.fn().mockResolvedValue([]),
+      validateFrontmatter: vi.fn().mockResolvedValue([]),
     });
   });
 
@@ -56,9 +56,9 @@ validated: true
       files: [file],
       dropEffect: '',
       types: ['Files'],
-      setData: jest.fn(),
-      getData: jest.fn(),
-      clearData: jest.fn(),
+      setData: vi.fn(),
+      getData: vi.fn(),
+      clearData: vi.fn(),
     };
 
     // ドロップエリアを取得
@@ -75,11 +75,11 @@ validated: true
 
   test('不正なフロントマターの場合、エラーバッジが表示される', async () => {
     // フロントマターエラーを返すモック
-    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
+    (yamlCore.useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
-      validateFrontmatter: jest.fn().mockResolvedValue([
+      validateFrontmatter: vi.fn().mockResolvedValue([
         {
           line: 2,
           message: 'Frontmatter validation error: Invalid schema_path',
@@ -108,9 +108,9 @@ validated: invalid
       files: [file],
       dropEffect: '',
       types: ['Files'],
-      setData: jest.fn(),
-      getData: jest.fn(),
-      clearData: jest.fn(),
+      setData: vi.fn(),
+      getData: vi.fn(),
+      clearData: vi.fn(),
     };
 
     // ドロップエリアを取得
@@ -137,9 +137,9 @@ validated: invalid
       files: [],
       dropEffect: '',
       types: ['text/plain'],
-      setData: jest.fn(),
-      getData: jest.fn(() => 'テキスト'),
-      clearData: jest.fn(),
+      setData: vi.fn(),
+      getData: vi.fn(() => 'テキスト'),
+      clearData: vi.fn(),
     };
 
     // ドロップエリアを取得
@@ -156,11 +156,11 @@ validated: invalid
 
   test('WASMが未ロード状態でもエディタは使用可能', async () => {
     // WASMが未ロード状態を模擬
-    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
+    (yamlCore.useYamlCore as any).mockReturnValue({
       wasmLoaded: false,
       wasmLoading: true,
       error: null,
-      validateFrontmatter: jest.fn().mockResolvedValue([]),
+      validateFrontmatter: vi.fn().mockResolvedValue([]),
     });
 
     render(
@@ -177,9 +177,9 @@ validated: invalid
       files: [file],
       dropEffect: '',
       types: ['Files'],
-      setData: jest.fn(),
-      getData: jest.fn(),
-      clearData: jest.fn(),
+      setData: vi.fn(),
+      getData: vi.fn(),
+      clearData: vi.fn(),
     };
 
     // ドロップエリアを取得

@@ -110,7 +110,7 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const exportLogs = (): string => {
     // ストレージから全てのログを取得
     const storedLogs = JSON.parse(localStorage.getItem('yaml_note_logs') || '[]');
-    // 現在のイベントと結合
+    // 現在のイベントと結合（現在のセッションのログは保存されていない可能性があるため、重複排除せずに結合）
     const allLogs = [...storedLogs, ...events];
     // JSONとして出力
     return JSON.stringify(allLogs, null, 2);

@@ -1,41 +1,41 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react';
 import { useValidator } from '../useValidator';
 import { useYamlCore } from '../useYamlCore';
 import * as schemaUtils from '../../utils/schema';
+import { vi, describe, expect, beforeEach, afterEach, test } from 'vitest';
 
 // モックの設定
-jest.mock('../useYamlCore', () => ({
-  useYamlCore: jest.fn(),
+vi.mock('../useYamlCore', () => ({
+  useYamlCore: vi.fn(),
 }));
 
-jest.mock('../../utils/schema', () => ({
-  fetchSchema: jest.fn(),
+vi.mock('../../utils/schema', () => ({
+  fetchSchema: vi.fn(),
 }));
 
-jest.mock('../useLogger', () => ({
-  __esModule: true,
+vi.mock('../useLogger', () => ({
   default: () => ({
-    log: jest.fn(),
+    log: vi.fn(),
   }),
 }));
 
 describe('useValidator', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test('WASMがロードされていない場合は空の配列を返す', async () => {
     // WASMがロードされていない状態をモック
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: false,
-      validateFrontmatter: jest.fn(),
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      validateFrontmatter: vi.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
@@ -45,11 +45,11 @@ describe('useValidator', () => {
   });
 
   test('空の入力の場合は空の配列を返す', async () => {
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
-      validateFrontmatter: jest.fn(),
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      validateFrontmatter: vi.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const { result } = renderHook(() => useValidator(''));
@@ -59,12 +59,12 @@ describe('useValidator', () => {
   });
 
   test('有効なフロントマターの場合、空のエラー配列を返す', async () => {
-    const validateFrontmatterMock = jest.fn().mockResolvedValue([]);
-    (useYamlCore as jest.Mock).mockReturnValue({
+    const validateFrontmatterMock = vi.fn().mockResolvedValue([]);
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const validMarkdown = `---
@@ -77,7 +77,7 @@ validated: true
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
@@ -96,12 +96,12 @@ validated: true
       },
     ];
 
-    const validateFrontmatterMock = jest.fn().mockResolvedValue(mockErrors);
-    (useYamlCore as jest.Mock).mockReturnValue({
+    const validateFrontmatterMock = vi.fn().mockResolvedValue(mockErrors);
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const invalidMarkdown = `---
@@ -114,7 +114,7 @@ validated: invalid
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
@@ -126,24 +126,24 @@ validated: invalid
 
   test('バリデーション中はisValidatingがtrueになる', async () => {
     // 実行を遅延させる検証関数
-    const validateFrontmatterMock = jest.fn().mockImplementation(() => {
+    const validateFrontmatterMock = vi.fn().mockImplementation(() => {
       return new Promise(resolve => {
         setTimeout(() => resolve([]), 100);
       });
     });
 
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
 
     // デバウンス処理を進める
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 検証中フラグを確認
@@ -151,7 +151,7 @@ validated: invalid
 
     // 検証完了まで時間を進める
     act(() => {
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
     });
 
     // 非同期処理の結果を待つ
@@ -162,20 +162,20 @@ validated: invalid
 
   test('エラーが発生した場合も適切に処理される', async () => {
     const error = new Error('検証エラー');
-    const validateFrontmatterMock = jest.fn().mockRejectedValue(error);
+    const validateFrontmatterMock = vi.fn().mockRejectedValue(error);
 
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
@@ -189,27 +189,25 @@ validated: invalid
   // S3フェーズ：スキーマ検証のテストケース追加
   test('スキーマ検証エラーが正しく検出される', async () => {
     // モックの準備
-    const validateFrontmatterMock = jest.fn().mockResolvedValue([]); // フロントマターは正常
-    const markdownToYamlMock = jest
-      .fn()
-      .mockResolvedValue('title: "Test"\ncontent: "Test content"');
-    const validateYamlWithSchemaMock = jest.fn().mockResolvedValue([
+    const validateFrontmatterMock = vi.fn().mockResolvedValue([]); // フロントマターは正常
+    const markdownToYamlMock = vi.fn().mockResolvedValue('title: "Test"\ncontent: "Test content"');
+    const validateYamlWithSchemaMock = vi.fn().mockResolvedValue([
       {
         line: 2,
         message: 'スキーマ検証エラー: 必須フィールド "description" がありません',
         path: '',
       },
     ]);
-    const fetchSchemaMock = jest.fn().mockResolvedValue('schema content');
+    const fetchSchemaMock = vi.fn().mockResolvedValue('schema content');
 
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: markdownToYamlMock,
       validateYamlWithSchema: validateYamlWithSchemaMock,
     });
 
-    (schemaUtils.fetchSchema as jest.Mock).mockImplementation(fetchSchemaMock);
+    (schemaUtils.fetchSchema as any).mockImplementation(fetchSchemaMock);
 
     const markdown = `---
 schema_path: /schemas/test.yaml
@@ -225,7 +223,7 @@ This is a test content`;
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
@@ -247,19 +245,19 @@ This is a test content`;
 
   test('validated: false の場合はスキーマ検証をスキップする', async () => {
     // モックの準備
-    const validateFrontmatterMock = jest.fn().mockResolvedValue([]);
-    const markdownToYamlMock = jest.fn();
-    const validateYamlWithSchemaMock = jest.fn();
-    const fetchSchemaMock = jest.fn();
+    const validateFrontmatterMock = vi.fn().mockResolvedValue([]);
+    const markdownToYamlMock = vi.fn();
+    const validateYamlWithSchemaMock = vi.fn();
+    const fetchSchemaMock = vi.fn();
 
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
       markdownToYaml: markdownToYamlMock,
       validateYamlWithSchema: validateYamlWithSchemaMock,
     });
 
-    (schemaUtils.fetchSchema as jest.Mock).mockImplementation(fetchSchemaMock);
+    (schemaUtils.fetchSchema as any).mockImplementation(fetchSchemaMock);
 
     const markdown = `---
 schema_path: /schemas/test.yaml
@@ -272,7 +270,7 @@ validated: false
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
@@ -289,19 +287,19 @@ validated: false
 
   test('スキーマ取得エラー時は適切にエラーを表示する', async () => {
     // モックの準備
-    const validateFrontmatterMock = jest.fn().mockResolvedValue([]);
-    const fetchSchemaMock = jest
+    const validateFrontmatterMock = vi.fn().mockResolvedValue([]);
+    const fetchSchemaMock = vi
       .fn()
       .mockRejectedValue(new Error('スキーマファイルが見つかりません'));
 
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
-    (schemaUtils.fetchSchema as jest.Mock).mockImplementation(fetchSchemaMock);
+    (schemaUtils.fetchSchema as any).mockImplementation(fetchSchemaMock);
 
     const markdown = `---
 schema_path: /invalid/schema.yaml
@@ -314,7 +312,7 @@ validated: true
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
@@ -330,22 +328,22 @@ validated: true
 
   test('clearErrorsは正しくエラーをクリアする', async () => {
     // 最初にエラーがある状態を設定
-    const validateFrontmatterMock = jest
+    const validateFrontmatterMock = vi
       .fn()
       .mockResolvedValue([{ line: 1, message: 'テストエラー', path: '' }]);
 
-    (useYamlCore as jest.Mock).mockReturnValue({
+    (useYamlCore as any).mockReturnValue({
       wasmLoaded: true,
       validateFrontmatter: validateFrontmatterMock,
-      markdownToYaml: jest.fn(),
-      validateYamlWithSchema: jest.fn(),
+      markdownToYaml: vi.fn(),
+      validateYamlWithSchema: vi.fn(),
     });
 
     const { result } = renderHook(() => useValidator('# test'));
 
     // デバウンス処理を待つ
     act(() => {
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
     });
 
     // 非同期処理の結果を待つ
