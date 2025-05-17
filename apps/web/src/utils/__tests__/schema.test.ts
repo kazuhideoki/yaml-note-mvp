@@ -1,4 +1,4 @@
-import { fetchSchema, invalidateSchemaCache, clearSchemaCache, isAbsolutePath } from '../schema';
+import { fetchSchema, isAbsolutePath } from '../schema';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
@@ -63,7 +63,6 @@ const server = setupServer(
 beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
-  clearSchemaCache();
 });
 afterAll(() => server.close());
 
@@ -166,67 +165,5 @@ describe('fetchSchema', () => {
     const cachedSchema = await fetchSchema('cached.yaml', '/custom/path/file.md');
     expect(cachedSchema).toContain('ORIGINAL CONTENT');
     expect(cachedSchema).not.toContain('CHANGED CONTENT');
-  });
-});
-
-describe('スキーマキャッシュ管理', () => {
-  test('キャッシュを無効化できる', async () => {
-    // 最初の呼び出し
-    server.use(
-      http.get('/custom/path/invalidate-test.yaml', () => {
-        return HttpResponse.text('ORIGINAL CONTENT');
-      })
-    );
-
-    await fetchSchema('invalidate-test.yaml', '/custom/path/file.md');
-
-    // サーバーエンドポイントを変更
-    server.use(
-      http.get('/custom/path/invalidate-test.yaml', () => {
-        return HttpResponse.text('CHANGED CONTENT');
-      })
-    );
-
-    // キャッシュ無効化
-    invalidateSchemaCache('invalidate-test.yaml', '/custom/path/file.md');
-
-    // 再取得
-    const newSchema = await fetchSchema('invalidate-test.yaml', '/custom/path/file.md');
-    expect(newSchema).toContain('CHANGED CONTENT');
-  });
-
-  test('キャッシュを全てクリアできる', async () => {
-    // 複数のスキーマをキャッシュに入れる
-    server.use(
-      http.get('/custom/path/clear-test1.yaml', () => {
-        return HttpResponse.text('ORIGINAL1');
-      }),
-      http.get('/custom/path/clear-test2.yaml', () => {
-        return HttpResponse.text('ORIGINAL2');
-      })
-    );
-
-    await fetchSchema('clear-test1.yaml', '/custom/path/file.md');
-    await fetchSchema('clear-test2.yaml', '/custom/path/file.md');
-
-    // エンドポイントを変更
-    server.use(
-      http.get('/custom/path/clear-test1.yaml', () => {
-        return HttpResponse.text('CHANGED1');
-      }),
-      http.get('/custom/path/clear-test2.yaml', () => {
-        return HttpResponse.text('CHANGED2');
-      })
-    );
-
-    // キャッシュクリア
-    clearSchemaCache();
-
-    // 再取得
-    const schema1 = await fetchSchema('clear-test1.yaml', '/custom/path/file.md');
-    const schema2 = await fetchSchema('clear-test2.yaml', '/custom/path/file.md');
-
-    expect(schema1).toContain('CHANGED1');
-    expect(schema2).toContain('CHANGED2');
   });
 });
