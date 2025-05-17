@@ -24,7 +24,7 @@ interface SchemaEditorProps {
 
 /**
  * スキーマエディタコンポーネント
- * 
+ *
  * @component
  * @param {SchemaEditorProps} props - コンポーネントのプロパティ
  * @param {string} props.schemaPath - スキーマファイルのパス
@@ -121,16 +121,19 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   }, [active, handleSave]);
 
   // エディタ変更ハンドラ
-  const handleChange = useCallback((value: string) => {
-    setContent(value);
-    setIsDirty(true);
-    if (onChange) {
-      onChange(value);
-    }
-  }, [onChange]);
+  const handleChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      setIsDirty(true);
+      if (onChange) {
+        onChange(value);
+      }
+    },
+    [onChange]
+  );
 
   // エラー行クリック時にエディタの該当行にジャンプ
-  const handleErrorClick = useCallback((line: number) => {
+  const handleErrorClick = useCallback(() => {
     // ここでエディタの該当行にフォーカスする処理を実装
     // CodeMirrorの実装による
   }, []);
@@ -143,14 +146,12 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
         <span className="text-sm text-gray-700">{schemaPath}</span>
         <button
           className={`px-3 py-1 rounded text-sm ${
-            isDirty
-              ? "bg-blue-500 text-white"
-              : "bg-gray-300 text-gray-700"
+            isDirty ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'
           }`}
           onClick={handleSave}
           disabled={!isDirty}
         >
-          保存 {isDirty && "*"}
+          保存 {isDirty && '*'}
         </button>
       </div>
 
@@ -165,13 +166,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
         />
       </div>
 
-      {errors.length > 0 && (
-        <ErrorBadge
-          errors={errors}
-          type="schema"
-          onClick={handleErrorClick}
-        />
-      )}
+      {errors.length > 0 && <ErrorBadge errors={errors} type="schema" onClick={handleErrorClick} />}
     </div>
   );
 };
