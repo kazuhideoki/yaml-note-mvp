@@ -61,14 +61,8 @@ pnpm test
 # Run Rust tests for core-wasm
 cargo test -p core-wasm
 
-# Validate a YAML note against schema
-pnpm validate-schema
-
 # Run type checking
 pnpm typecheck
-
-# Run linters
-pnpm lint
 ```
 
 ## Development Workflow
@@ -90,7 +84,6 @@ pnpm lint
 
 3. **Schema Changes**:
    - Edit schema files in `packages/schemas/`
-   - Validate sample files with `pnpm validate-schema`
 
 ## Commenting Policy & Style Guide (TypeScript / Rust)
 

@@ -12,17 +12,19 @@ A browser-based note-taking application that uses YAML as its primary format, fe
 
 ## Project Architecture
 
-1. **Web App (React/TypeScript)**: 
+1. **Web App (React/TypeScript)**:
+
    - UI with three panes: Raw YAML editor, error display, and Markdown preview
    - Built with React, Vite, and Tailwind CSS
    - Uses CodeMirror for YAML editing
 
-2. **Core WASM (Rust)**: 
+2. **Core WASM (Rust)**:
+
    - Handles YAML parsing, validation, and processing
    - Compiled to WebAssembly for browser integration
    - Provides sub-millisecond validation performance
 
-3. **Schema Definitions**: 
+3. **Schema Definitions**:
    - JSON Schema files (in YAML format) that define note structure
    - Version-controlled to track schema evolution
 
@@ -59,9 +61,6 @@ pnpm test
 
 # Run Rust tests for core-wasm
 cargo test -p core-wasm
-
-# Validate a YAML note against schema
-pnpm validate-schema
 
 # Run type checking
 pnpm typecheck
