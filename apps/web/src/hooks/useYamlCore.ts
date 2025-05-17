@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { debounce } from 'lodash-es';
 import { ValidationError } from './validation-error.type';
 
 /**
@@ -7,11 +6,7 @@ import { ValidationError } from './validation-error.type';
  */
 interface CoreWasmType {
   validate_yaml: (yaml: string, schema: string) => string;
-  parse_yaml: (yaml: string) => string;
-  stringify_yaml: (json: string) => string;
-  md_to_yaml: (md: string) => string;
   md_headings_to_yaml: (md: string) => string; // 追加: 見出し構造を解析してYAML化する関数
-  yaml_to_md: (yaml: string) => string;
   parse_and_validate_frontmatter: (md: string) => string;
   compile_schema: (schema: string) => string; // 追加: スキーマ自体の検証
   version: () => string;
@@ -41,8 +36,6 @@ export interface ConversionResult {
  *   wasmLoaded: boolean;
  *   wasmLoading: boolean;
  *   error: Error | null;
- *   mdToYaml: (md: string) => Promise<ConversionResult>;
- *   yamlToMd: (yaml: string) => Promise<ConversionResult>;
  *   validateFrontmatter: (md: string) => Promise<ValidationError[]>;
  * }}
  */
@@ -81,88 +74,6 @@ export function useYamlCore() {
 
     loadWasm();
   }, [wasmLoaded, wasmLoading]);
-
-  // Markdown -> YAML 変換関数
-  const mdToYaml = useCallback(
-    debounce(async (md: string): Promise<ConversionResult> => {
-      if (!wasmLoaded || !instance) {
-        return {
-          success: false,
-          content: '',
-          error: 'WASM not initialized',
-        };
-      }
-
-      if (!md.trim()) {
-        return { success: true, content: '' };
-      }
-
-      try {
-        const result = instance.md_to_yaml(md);
-
-        // エラーチェック（JSONで返ってくる場合はエラー）
-        if (result.includes('"success":false')) {
-          const errorObj = JSON.parse(result);
-          return {
-            success: false,
-            content: '',
-            error: errorObj.errors?.[0]?.message || 'Unknown error',
-          };
-        }
-
-        return { success: true, content: result };
-      } catch (error) {
-        console.error('MD to YAML conversion error:', error);
-        return {
-          success: false,
-          content: '',
-          error: `変換エラー: ${error}`,
-        };
-      }
-    }, 30), // 30msのデバウンス
-    [wasmLoaded, instance]
-  );
-
-  // YAML -> Markdown 変換関数
-  const yamlToMd = useCallback(
-    debounce(async (yaml: string): Promise<ConversionResult> => {
-      if (!wasmLoaded || !instance) {
-        return {
-          success: false,
-          content: '',
-          error: 'WASM not initialized',
-        };
-      }
-
-      if (!yaml.trim()) {
-        return { success: true, content: '' };
-      }
-
-      try {
-        const result = instance.yaml_to_md(yaml);
-
-        // エラーチェック
-        if (result.includes('"success":false')) {
-          const errorObj = JSON.parse(result);
-          return {
-            success: false,
-            content: '',
-            error: errorObj.errors?.[0]?.message || 'Unknown error',
-          };
-        }
-
-        return { success: true, content: result };
-      } catch (error) {
-        console.error('YAML to MD conversion error:', error);
-        return {
-          success: false,
-          content: '',
-          error: `変換エラー: ${error}`,
-        };
-      }
-    }, 30), // 30msのデバウンス
-    [wasmLoaded, instance]
-  );
 
   /**
    * Markdownのフロントマターを検証し、エラーがあれば返す
@@ -216,7 +127,6 @@ export function useYamlCore() {
       }
 
       try {
-        // md_to_yamlからmd_headings_to_yamlに変更
         return instance.md_headings_to_yaml(markdown);
       } catch (error) {
         console.error('Markdown to YAML conversion error:', error);
@@ -289,10 +199,10 @@ export function useYamlCore() {
 
   /**
    * スキーマのコンパイル検証を行う
-   * 
+   *
    * @param {string} schemaYaml - 検証するスキーマYAML
    * @returns {Promise<ValidationError[]>} 検証エラーの配列
-   * 
+   *
    * @description
    * スキーマYAMLの構文とJSONスキーマとしての論理的正当性を検証する。
    * WASMコアの`compile_schema`関数を使用。
@@ -310,7 +220,9 @@ export function useYamlCore() {
         if (!result.success) {
           return result.errors.map((err: any) => ({
             line: err.line || 0,
-            message: err.message.startsWith('スキーマ構文エラー:') ? err.message : `スキーマ構文エラー: ${err.message}`,
+            message: err.message.startsWith('スキーマ構文エラー:')
+              ? err.message
+              : `スキーマ構文エラー: ${err.message}`,
             path: err.path || '',
           }));
         }
@@ -328,8 +240,6 @@ export function useYamlCore() {
     wasmLoaded,
     wasmLoading,
     error,
-    mdToYaml,
-    yamlToMd,
     validateFrontmatter,
     markdownToYaml,
     validateYamlWithSchema,

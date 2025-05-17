@@ -6,127 +6,7 @@
 //! - ヘッダー部分とコンテンツ部分の分離・結合処理
 //! - 見出し構造のYAML階層構造への変換
 
-use crate::error::{ErrorInfo, ValidationResult};
-use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
 use serde::Serialize;
-use serde_json::Value;
-
-/// Markdownテキストを解析してYAML文字列に変換する
-///
-/// # 引数
-/// * `md_str` - 変換元のMarkdown文字列
-///
-/// # 戻り値
-/// * 成功時: YAML形式の文字列
-/// * 失敗時: エラー情報を含むJSON文字列
-///
-/// # 動作概要
-/// 1. Markdownをパースして構造を解析
-/// 2. ヘッダーとコンテンツを分離
-/// 3. コンテンツを適切にYAML化
-/// 4. ヘッダー情報とマージして完全なYAMLを構築
-pub fn md_to_yaml(md_str: &str) -> String {
-    let mut title = String::new();
-    let mut in_title = false;
-    let mut found_title = false;
-
-    let parser = Parser::new(md_str);
-
-    // タイトル抽出
-    for event in parser {
-        match event {
-            Event::Start(Tag::Heading(HeadingLevel::H1, ..)) => {
-                in_title = true;
-            }
-            Event::Text(text) if in_title && title.is_empty() => {
-                title = text.to_string();
-                found_title = true;
-            }
-            Event::End(Tag::Heading(HeadingLevel::H1, ..)) => {
-                in_title = false;
-            }
-            _ => {}
-        }
-    }
-
-    // タイトルが見つからない場合は元のテキストをコンテンツとして扱う
-    let content = if !found_title {
-        title = "Untitled Document".to_string();
-        md_str.to_string()
-    } else {
-        // タイトル行を除いた残りをcontentとする
-        let mut lines = md_str.lines();
-        let mut content_lines = Vec::new();
-        let mut title_found = false;
-        for line in lines.by_ref() {
-            if line.trim_start().starts_with("# ") && !title_found {
-                title_found = true;
-                continue;
-            }
-            if title_found {
-                content_lines.push(line);
-            }
-        }
-        content_lines.join("\n").trim_start().to_string()
-    };
-
-    // YAMLの構築
-    let yaml = format!("title: {}\ncontent: |\n{}", title, indent_content(&content));
-    yaml
-}
-
-/// YAMLをMarkdownテキストに変換する
-///
-/// # 引数
-/// * `yaml_str` - 変換元のYAML文字列
-///
-/// # 戻り値
-/// * 成功時: Markdown形式の文字列
-/// * 失敗時: エラー情報を含むJSON文字列
-///
-/// # 動作概要
-/// 1. YAMLをパースして構造データに変換
-/// 2. タイトルとコンテンツを抽出
-/// 3. Markdownフォーマットに整形して返す
-pub fn yaml_to_md(yaml_str: &str) -> String {
-    match serde_yaml::from_str::<Value>(yaml_str) {
-        Ok(value) => {
-            let mut md = String::new();
-
-            // タイトルの抽出
-            if let Some(title) = value.get("title").and_then(|t| t.as_str()) {
-                md.push_str(&format!("# {}\n\n", title));
-            }
-
-            // コンテンツの抽出
-            if let Some(content) = value.get("content").and_then(|c| c.as_str()) {
-                md.push_str(content);
-                if !content.ends_with('\n') {
-                    md.push('\n');
-                }
-            }
-
-            md
-        }
-        Err(e) => {
-            let result = ValidationResult::single_error(ErrorInfo::new(
-                0,
-                format!("YAML parse error: {}", e),
-                "",
-            ));
-            result.to_json()
-        }
-    }
-}
-
-/// テキストコンテンツをYAML複数行文字列用にインデントする
-fn indent_content(content: &str) -> String {
-    content
-        .lines()
-        .map(|line| format!("  {}", line))
-        .collect::<Vec<String>>()
-        .join("\n")
-}
 
 #[derive(Debug, Default, Serialize)]
 struct Section {
@@ -177,25 +57,25 @@ pub fn md_headings_to_yaml(md: &str) -> String {
 
     // マークダウンの行ごとの処理
     let lines: Vec<&str> = trimmed_md.lines().collect();
-    
+
     // 各行を解析して見出しレベルを判定
     let mut i = 0;
     let mut doc_content = String::new();
-    
+
     // マークダウンから見出し構造を抽出する関数
     fn extract_headings(
-        lines: &[&str], 
-        start_idx: &mut usize, 
-        current_level: usize,
-        target_level: usize
+        lines: &[&str],
+        start_idx: &mut usize,
+        _current_level: usize,
+        target_level: usize,
     ) -> Vec<Section> {
         let mut sections = Vec::new();
         let mut current_section: Option<Section> = None;
         let mut section_content = String::new();
-        
+
         while *start_idx < lines.len() {
             let line = lines[*start_idx].trim();
-            
+
             // 見出しレベルを判定
             let heading_level = if line.starts_with("##### ") {
                 5
@@ -208,9 +88,9 @@ pub fn md_headings_to_yaml(md: &str) -> String {
             } else if line.starts_with("# ") {
                 1
             } else {
-                0  // 見出しでない
+                0 // 見出しでない
             };
-            
+
             // 現在の見出しと同じか上のレベルなら、処理を終了
             if heading_level > 0 && heading_level <= target_level {
                 // 現在のセクションをコンテンツと一緒に保存して終了
@@ -220,7 +100,7 @@ pub fn md_headings_to_yaml(md: &str) -> String {
                 }
                 return sections;
             }
-            
+
             // 対象レベルの1つ下の見出しを検出
             if heading_level == target_level + 1 {
                 // 前のセクションがあれば保存
@@ -228,7 +108,7 @@ pub fn md_headings_to_yaml(md: &str) -> String {
                     section.content = section_content.trim().to_string();
                     sections.push(section);
                 }
-                
+
                 // 新しいセクションを作成
                 let title = line[(heading_level + 1)..].trim().to_string();
                 current_section = Some(Section {
@@ -237,7 +117,7 @@ pub fn md_headings_to_yaml(md: &str) -> String {
                     sections: Vec::new(),
                 });
                 section_content = String::new();
-            } 
+            }
             // さらに下の階層の見出しを検出した場合は再帰的に処理
             else if heading_level > target_level + 1 {
                 // 前のセクションがなければ作成
@@ -249,25 +129,26 @@ pub fn md_headings_to_yaml(md: &str) -> String {
                     });
                     section_content = String::new();
                 }
-                
+
                 // 現在の位置を記録
                 let current_pos = *start_idx;
-                
+
                 // 子セクションを再帰的に処理
-                let sub_sections = extract_headings(lines, start_idx, heading_level, target_level + 1);
-                
+                let sub_sections =
+                    extract_headings(lines, start_idx, heading_level, target_level + 1);
+
                 // 子セクションを現在のセクションに追加
                 if let Some(section) = &mut current_section {
                     section.sections = sub_sections;
                 }
-                
+
                 // 再帰呼び出しが位置を進めなかった場合は、自分で進める
                 if current_pos == *start_idx {
                     *start_idx += 1;
                 }
-                
+
                 continue;
-            } 
+            }
             // 普通のテキスト行
             else {
                 if let Some(_) = current_section {
@@ -284,19 +165,19 @@ pub fn md_headings_to_yaml(md: &str) -> String {
                     section_content.push_str(line);
                 }
             }
-            
+
             *start_idx += 1;
         }
-        
+
         // 最後のセクションを追加
         if let Some(mut section) = current_section {
             section.content = section_content.trim().to_string();
             sections.push(section);
         }
-        
+
         sections
     }
-    
+
     // まず最初のH1を探してタイトルとして使用
     while i < lines.len() {
         let line = lines[i].trim();
@@ -308,15 +189,15 @@ pub fn md_headings_to_yaml(md: &str) -> String {
         }
         i += 1;
     }
-    
+
     // タイトルが見つからなければデフォルト値を設定
     if !found_title {
         document.title = "Untitled Document".to_string();
-        i = 0;  // 最初から処理
+        i = 0; // 最初から処理
     }
-    
+
     // タイトルと最初のH2の間のテキストはドキュメントコンテンツ
-    let mut content_start = i;
+    let content_start = i;
     while i < lines.len() {
         let line = lines[i].trim();
         if line.starts_with("## ") {
@@ -324,57 +205,24 @@ pub fn md_headings_to_yaml(md: &str) -> String {
         }
         i += 1;
     }
-    
+
     // ドキュメントコンテンツを抽出
     if i > content_start {
         doc_content = lines[content_start..i].join("\n").trim().to_string();
     }
-    
+
     // 残りはセクションとして処理
     let mut start_idx = content_start;
     document.sections = extract_headings(&lines, &mut start_idx, 0, 1);
     document.content = doc_content;
-    
+
     // YAMLに変換して返す
-    serde_yaml::to_string(&document).unwrap_or_else(|e| {
-        format!("Error serializing to YAML: {}", e)
-    })
+    serde_yaml::to_string(&document).unwrap_or_else(|e| format!("Error serializing to YAML: {}", e))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_md_to_yaml_basic() {
-        let md = "# Test Title\n\nThis is a test content.";
-        let yaml = md_to_yaml(md);
-
-        assert!(yaml.contains("title: Test Title"));
-        assert!(yaml.contains("content: |"));
-        assert!(yaml.contains("  This is a test content."));
-    }
-
-    #[test]
-    fn test_yaml_to_md_basic() {
-        let yaml =
-            "title: Test Title\ncontent: |\n  This is a test content.\n  With multiple lines.";
-        let md = yaml_to_md(yaml);
-
-        assert!(md.contains("# Test Title"));
-        assert!(md.contains("This is a test content."));
-        assert!(md.contains("With multiple lines."));
-    }
-
-    #[test]
-    fn test_md_roundtrip() {
-        // Markdown -> YAML -> Markdown の変換で情報が保持されるかをテスト
-        let original_md = "# Roundtrip Test\n\nThis is a test for roundtrip conversion.";
-        let yaml = md_to_yaml(original_md);
-        let roundtrip_md = yaml_to_md(&yaml);
-
-        assert_eq!(original_md, roundtrip_md.trim());
-    }
 
     #[test]
     fn test_md_headings_to_yaml() {
@@ -568,14 +416,13 @@ Content
                 },
                 Section {
                     title: "Conclusion".to_string(),
-                    content: "The relative schema path feature makes the note more portable.".to_string(),
-                    sections: vec![
-                        Section {
-                            title: "Final Thoughts".to_string(),
-                            content: "Some final thoughts.".to_string(),
-                            sections: vec![],
-                        },
-                    ],
+                    content: "The relative schema path feature makes the note more portable."
+                        .to_string(),
+                    sections: vec![Section {
+                        title: "Final Thoughts".to_string(),
+                        content: "Some final thoughts.".to_string(),
+                        sections: vec![],
+                    }],
                 },
             ],
         };

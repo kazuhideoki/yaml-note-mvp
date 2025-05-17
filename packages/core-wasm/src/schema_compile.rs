@@ -6,7 +6,6 @@
 
 use serde_json::Value;
 use serde_yaml;
-use wasm_bindgen::prelude::*;
 use crate::error::{ErrorInfo, ValidationResult};
 
 /// JSONスキーマをコンパイルして検証する
