@@ -38,7 +38,11 @@ describe('MarkdownEditor', () => {
   test('正常なマークダウンの場合、エラーバッジが表示されない', async () => {
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 
@@ -90,7 +94,11 @@ validated: true
 
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 
@@ -128,7 +136,11 @@ validated: invalid
   test('ファイル以外をドロップした場合は何も起こらない', async () => {
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 
@@ -165,7 +177,11 @@ validated: invalid
 
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 
