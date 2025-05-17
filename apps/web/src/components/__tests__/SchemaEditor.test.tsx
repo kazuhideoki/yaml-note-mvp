@@ -9,16 +9,11 @@ vi.mock('../../hooks/useYamlCore', () => ({
   })
 }));
 
-vi.mock('../../contexts/LoggerContext', async () => {
-  return {
-    useLogger: () => ({
-      log: vi.fn()
-    }),
-    LoggerContext: {
-      Provider: ({ children }: { children: React.ReactNode }) => children
-    }
-  };
-});
+vi.mock('../../hooks/useLogger', () => ({
+  default: () => ({
+    log: vi.fn()
+  })
+}));
 
 // CodeMirrorのモック
 vi.mock('@uiw/react-codemirror', () => ({
@@ -83,12 +78,21 @@ describe('SchemaEditor', () => {
       />
     );
     
-    const saveButton = screen.getByText('保存');
+    // isDirtyをtrueにするために、まずコンテンツを変更する必要がある
+    const textarea = screen.getByTestId('codemirror-textarea');
+    const newContent = initialSchema + "\n# added line";
+    
+    await act(async () => {
+      fireEvent.change(textarea, { target: { value: newContent } });
+    });
+    
+    // 保存ボタンをクリック (isDirtyになったので有効になっているはず)
+    const saveButton = screen.getByText(/保存/);
     await act(async () => {
       fireEvent.click(saveButton);
     });
     
-    expect(onSaveMock).toHaveBeenCalledWith(initialSchema);
+    expect(onSaveMock).toHaveBeenCalledWith(newContent);
   });
   
   /**
@@ -104,7 +108,7 @@ describe('SchemaEditor', () => {
       />
     );
     
-    expect(screen.getByText(`編集中: ${schemaPath}`)).toBeInTheDocument();
+    expect(screen.getByText(schemaPath)).toBeInTheDocument();
   });
   
   /**
