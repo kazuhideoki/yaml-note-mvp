@@ -1,37 +1,138 @@
-# AGENTS.md – Codex ガイド
+# CLAUDE.md
 
-## 🏗 セットアップ
-Codex がタスクを開始する前に **`./scripts/codex-setup.sh`** を 1 回だけ実行してください。  
-セットアップ後はインターネット遮断モードに切り替わるため、依存取得はこのスクリプト内で完結させます。
+This file provides guidance to Codex when working with code in this repository.
 
-## ✅ テスト・品質チェック
-タスク完了前に必ず下記コマンドを実行し **全てパスさせる** こと。
+## Project Overview
+
+YAML Note MVP is a browser-based note-taking application that uses YAML as its primary format. The application features a React-based web interface with real-time validation of YAML notes against JSON Schema definitions, and provides both raw YAML editing and Markdown preview capabilities.
+
+The project uses a monorepo structure with Rust (compiled to WebAssembly) for core YAML validation functions, and React/TypeScript for the web interface. The application is designed to provide immediate error feedback while editing YAML notes.
+
+## Key Architecture Components
+
+1. **Web App (React/TypeScript)**:
+
+   - UI with three panes: Raw YAML editor, error display, and Markdown preview
+   - Built with React, Vite, and Tailwind CSS
+   - Uses CodeMirror for YAML editing
+
+2. **Core WASM (Rust)**:
+
+   - Handles YAML parsing, validation, and processing
+   - Compiled to WebAssembly for browser integration
+   - Provides sub-millisecond validation performance
+
+3. **Schema Definitions**:
+
+- JSON Schema files (in YAML format) are located under `apps/web/public/schemas/`
+- Schema evolution is tracked via version control
+
+## Common Commands
+
+### Setup and Installation
 
 ```bash
-# TypeScript
-pnpm test         # Vitest
-pnpm typecheck    # tsc --noEmit
-pnpm lint         # ESLint / Prettier
+# Install all dependencies (Node.js and Rust components)
+pnpm install
+```
 
-# Rust (core-wasm)
+### Development
+
+```bash
+# Start development server with WASM compilation
+./scripts/dev-start.sh
+
+# Start only the web app (without rebuilding WASM)
+pnpm dev
+
+# Build the WASM module
+cd packages/core-wasm && ./build.sh
+
+# Build the web application
+pnpm build
+```
+
+### Testing and Validation
+
+```bash
+# Run all tests
+pnpm test
+
+# Run Rust tests for core-wasm
 cargo test -p core-wasm
+
+# Validate a YAML note against schema
+pnpm validate-schema
+
+# Run type checking
+pnpm typecheck
+
+# Run linters
+pnpm lint
 ```
 
-## 🔨 ビルド依存
+## Development Workflow
 
-TypeScript テストの前に WASM をビルドする必要がある場合は：
+- **Required Rule**:
+  After any work (such as code modifications, additions, or refactoring), you must run the tests (`pnpm test` and, for Rust, `cargo test -p core-wasm`) and confirm that all tests pass.
+  If any tests fail, fix the issues before completing your work.
 
-```bash
-pnpm --filter core-wasm... run build-wasm   # packages/core-wasm/build.sh のラッパー
-```
+1. **WASM Module Changes**:
 
-## 🎨 コードスタイル
-- TypeScript / Rust のコメントは日本語（詳細は CLAUDE.md を参照）。
-- ES Module, 2-space indent, trailing comma = all, Prettier 規定。
+   - Edit files in `packages/core-wasm/src/`
+   - Run `./build.sh` from within the core-wasm directory to rebuild
+   - The built package will be available in `packages/core-wasm/pkg/`
 
-## 📝 Pull Request ルール
-- Git ブランチは切らず 直接コミット（Codex の既定）。
-- PR メッセージにはテスト結果の要約を含める。
+2. **Web Application Changes**:
 
-> **ポイント**  
-> *ファイル名と場所* は固定：**`AGENTS.md` をリポジトリのルート** に置くと全コードに適用されます。
+   - Edit files in `apps/web/src/`
+   - The development server will automatically reload on changes
+
+3. **Schema Changes**:
+   - Edit schema files in `packages/schemas/`
+   - Validate sample files with `pnpm validate-schema`
+
+## Commenting Policy & Style Guide (TypeScript / Rust)
+
+This project requires all developers and code agents to write comments that make the intent, design, and usage of the code easy to understand. Please follow the guidelines below.
+
+### General Principles
+
+- **Emphasize "why" and design intent**: Comments should supplement not just what the code does, but why it is written that way, including design decisions and background.
+- **Comprehensive API documentation**: All public functions, types, and components must have JSDoc (TS) or Rust doc comments.
+- **Consistency & conciseness**: Maintain a consistent comment style and level of detail throughout the codebase. Be concise and accurate.
+- **Explicit TODO/FIXME**: Mark unimplemented features or known issues with `TODO:` or `FIXME:`.
+
+---
+
+### TypeScript (including React)
+
+- Use **JSDoc format** for functions, types, components, and custom hooks.
+- JSDoc at the top of files and for type definitions is also recommended.
+- Comments must be written in Japanese.
+- **複雑なロジックや副作用にはインラインコメント**（`//`、日本語可）も活用。
+
+---
+
+### Rust
+
+- **Add doc comments (`///` or `//!`) to all public functions, types, and modules.**
+- Document arguments, return values, errors, and usage examples.
+- Comments must be written in Japanese.
+
+- **構造体・enumの各フィールドにもコメント**を推奨（日本語可）。
+- **複雑なアルゴリズムやunsafeブロックにはインラインコメント**（`//`、日本語可）で補足。
+
+---
+
+### Reference
+
+- Always update comments when code changes.
+- For more detailed guidelines and templates, see `add-comment-spec.md`.
+
+## Technology Stack
+
+- **Frontend**: React, TypeScript, Tailwind CSS, CodeMirror
+- **Core Logic**: Rust (compiled to WASM), serde_yaml, jsonschema-valid
+- **Build Tools**: pnpm, wasm-pack, Vite
+- **Future Plans**: Migration to Tauri for native capabilities
