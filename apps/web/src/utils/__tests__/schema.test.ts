@@ -54,6 +54,9 @@ const server = setupServer(
   }),
   http.get('/sample/nonexistent.yaml', () => {
     return new HttpResponse(null, { status: 404 });
+  }),
+  http.get('/custom/path/nonexistent.yaml', () => {
+    return new HttpResponse(null, { status: 404 });
   })
 );
 
