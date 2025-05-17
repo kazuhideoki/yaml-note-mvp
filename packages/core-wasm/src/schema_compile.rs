@@ -186,12 +186,13 @@ mod tests {
 
     #[test]
     fn test_invalid_yaml_syntax() {
+        // Use actually invalid YAML syntax with mismatched brackets
         let schema = r#"
             type: object
             properties:
               title: {
                 type: string
-              }
+              
               content:
                 type: string
             required:
