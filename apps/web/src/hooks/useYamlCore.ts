@@ -310,7 +310,7 @@ export function useYamlCore() {
         if (!result.success) {
           return result.errors.map((err: any) => ({
             line: err.line || 0,
-            message: `スキーマ構文エラー: ${err.message}`,
+            message: err.message.startsWith('スキーマ構文エラー:') ? err.message : `スキーマ構文エラー: ${err.message}`,
             path: err.path || '',
           }));
         }
