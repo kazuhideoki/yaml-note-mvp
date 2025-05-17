@@ -18,7 +18,6 @@ import { fetchSchema } from './utils/schema';
  *
  * @component
  * @description
- * V3仕様に基づく、Markdownをフォーマットとして使用するノートアプリケーション。
  * タブベースのUIでMarkdownとSchemaの編集を提供し、リアルタイム検証を行う。
  *
  * @returns {JSX.Element} アプリケーション全体のUI

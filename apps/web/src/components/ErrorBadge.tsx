@@ -1,5 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ValidationError } from '../hooks/validation-error.type';
+
+// エラータイプのユニオン型を定義
+type ErrorType =
+  | 'frontmatter_error'
+  | 'schema_error'
+  | 'required_field'
+  | 'type_mismatch'
+  | 'pattern_mismatch'
+  | 'other';
 import useLogger from '../hooks/useLogger';
 
 interface ErrorBadgeProps {
@@ -25,11 +34,11 @@ interface ErrorBadgeProps {
  * エラータイプに応じて色分け表示（赤：フロントマターエラー、黄：スキーマ違反、紫：スキーマ構文エラー）
  * エラーが解消された場合、適切にコンポーネントを非表示にする
  */
-export const ErrorBadge: React.FC<ErrorBadgeProps> = ({ 
-  errors, 
-  onClick, 
+export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
+  errors,
+  onClick,
   className = '',
-  type
+  type,
 }) => {
   const { log } = useLogger();
   const [visible, setVisible] = useState(false);
@@ -42,22 +51,37 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
       setVisible(true);
 
       // エラータイプを集計
-      const errorTypes = errors.reduce((acc: Record<string, number>, err) => {
-        const type =
-          err.message.includes('フロントマター') || err.message.includes('Frontmatter')
-            ? 'frontmatter_error'
-            : err.message.includes('スキーマ検証') || err.message.includes('Schema validation')
-              ? 'schema_error'
-              : err.message.includes('required')
-                ? 'required_field'
-                : err.message.includes('type')
-                  ? 'type_mismatch'
-                  : err.message.includes('pattern')
-                    ? 'pattern_mismatch'
-                    : 'other';
+      const errorTypes = errors.reduce((acc: Record<ErrorType, number>, err) => {
+        let type: ErrorType;
+        switch (true) {
+          case err.message.includes('フロントマター') || err.message.includes('Frontmatter'):
+            type = 'frontmatter_error';
+            break;
+          case err.message.includes('スキーマ検証') || err.message.includes('Schema validation'):
+            type = 'schema_error';
+            break;
+          case err.message.includes('required'):
+            type = 'required_field';
+            break;
+          case err.message.includes('type'):
+            type = 'type_mismatch';
+            break;
+          case err.message.includes('pattern'):
+            type = 'pattern_mismatch';
+            break;
+          default:
+            type = 'other';
+        }
         acc[type] = (acc[type] || 0) + 1;
         return acc;
-      }, {});
+      }, {
+        frontmatter_error: 0,
+        schema_error: 0,
+        required_field: 0,
+        type_mismatch: 0,
+        pattern_mismatch: 0,
+        other: 0,
+      });
 
       // 前回と異なるエラーセットの場合のみログを記録
       if (JSON.stringify(errors) !== JSON.stringify(prevErrorsRef.current)) {
@@ -107,17 +131,25 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   // エラータイプに基づいてクラスを返す関数
   const getErrorTypeClass = (error: ValidationError) => {
     // スキーマ構文エラー（紫）
-    if (type === 'schema' || error.message.includes('スキーマ構文') || error.message.includes('Schema syntax')) {
+    if (
+      type === 'schema' ||
+      error.message.includes('スキーマ構文') ||
+      error.message.includes('Schema syntax')
+    ) {
       return 'bg-purple-100 border-purple-400 text-purple-700';
     }
     // フロントマターエラー（赤）
-    else if (type === 'frontmatter' || error.message.includes('フロントマター') || error.message.includes('Frontmatter')) {
+    else if (
+      type === 'frontmatter' ||
+      error.message.includes('フロントマター') ||
+      error.message.includes('Frontmatter')
+    ) {
       return 'bg-red-100 border-red-400 text-red-700';
-    } 
+    }
     // スキーマ検証エラー（黄）
     else if (
       type === 'schemaValidation' ||
-      error.message.includes('スキーマ検証') || 
+      error.message.includes('スキーマ検証') ||
       error.message.includes('Schema validation')
     ) {
       return 'bg-yellow-100 border-yellow-400 text-yellow-700';
@@ -140,7 +172,7 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
     const hasSchemaStructureError = errors.some(
       error => error.message.includes('スキーマ構文') || error.message.includes('Schema syntax')
     );
-    
+
     // フロントマターエラー判定
     const hasFrontmatterError = errors.some(
       error => error.message.includes('フロントマター') || error.message.includes('Frontmatter')
@@ -185,12 +217,12 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
         </svg>
       );
     }
-    
+
     // スキーマ構文エラー判定
     const hasSchemaStructureError = errors.some(
       error => error.message.includes('スキーマ構文') || error.message.includes('Schema syntax')
     );
-    
+
     // フロントマターエラーがあるか確認
     const hasFrontmatterError = errors.some(
       error => error.message.includes('フロントマター') || error.message.includes('Frontmatter')
@@ -342,7 +374,7 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
     const schemaStructureErrors = errors.filter(
       error => error.message.includes('スキーマ構文') || error.message.includes('Schema syntax')
     );
-    
+
     // フロントマターエラー
     const frontmatterErrors = errors.filter(
       error => error.message.includes('フロントマター') || error.message.includes('Frontmatter')
@@ -372,7 +404,7 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
             {schemaStructureErrors.map((error, index) => renderError(error, index))}
           </div>
         )}
-        
+
         {frontmatterErrors.length > 0 && (
           <div className="mb-2">
             <div className="font-bold text-red-700 mb-1">フロントマターエラー:</div>
