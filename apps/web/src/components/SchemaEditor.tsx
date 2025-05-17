@@ -19,6 +19,7 @@ interface SchemaEditorProps {
   initialSchema: string;
   onSave: (content: string) => void;
   active: boolean;
+  onChange?: (content: string) => void;
 }
 
 /**
@@ -37,6 +38,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   initialSchema,
   onSave,
   active,
+  onChange,
 }) => {
   const [content, setContent] = useState(initialSchema);
   const [errors, setErrors] = useState<ValidationError[]>([]);
@@ -44,9 +46,10 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   const [isDirty, setIsDirty] = useState(false);
   const { log } = useLogger();
 
-  // 初期スキーマが変更されたとき、内容を更新
+  // 初期スキーマが変更されたとき、内容を更新（保存されたスキーマの場合のみ）
   useEffect(() => {
-    if (initialSchema !== content && !isDirty) {
+    // 初めてロードされたときだけ初期値をセット
+    if (initialSchema && content === '' && !isDirty) {
       setContent(initialSchema);
     }
   }, [initialSchema, content, isDirty]);
@@ -84,10 +87,10 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
       }
     };
 
-    // 30msのデバウンス
+    // デバウンス時間を0msに設定して即時実行
     const timerId = setTimeout(() => {
       validateSchema();
-    }, 30);
+    }, 0);
 
     return () => clearTimeout(timerId);
   }, [content, wasmLoaded, compileSchema, active, schemaPath, log]);
@@ -121,7 +124,10 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   const handleChange = useCallback((value: string) => {
     setContent(value);
     setIsDirty(true);
-  }, []);
+    if (onChange) {
+      onChange(value);
+    }
+  }, [onChange]);
 
   // エラー行クリック時にエディタの該当行にジャンプ
   const handleErrorClick = useCallback((line: number) => {

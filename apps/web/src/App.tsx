@@ -27,8 +27,10 @@ const App: React.FC = () => {
   // エディタの状態管理
   const [markdownContent, setMarkdownContent] = useState<string>('');
   const [schemaContent, setSchemaContent] = useState<string>('');
+  const [editedSchemaContent, setEditedSchemaContent] = useState<string>('');
   const [schemaPath, setSchemaPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('note');
+  const [isDirtySchema, setIsDirtySchema] = useState(false);
 
   // バリデーション状態
   const { errors, schemaPath: validatorSchemaPath } = useValidator(markdownContent);
@@ -38,12 +40,16 @@ const App: React.FC = () => {
     try {
       const schema = await fetchSchema(path);
       setSchemaContent(schema);
+      // 初回ロード時だけ編集内容も設定
+      if (!isDirtySchema || path !== schemaPath) {
+        setEditedSchemaContent(schema);
+      }
       setSchemaPath(path);
     } catch (error) {
       console.error('Failed to load schema:', error);
       // エラー処理はここに追加
     }
-  }, []);
+  }, [isDirtySchema, schemaPath]);
 
   // useValidator からスキーマパスを取得して自動ロード
   useEffect(() => {
@@ -64,6 +70,8 @@ const App: React.FC = () => {
     // ここにスキーマファイル保存ロジックを実装
     console.log('Saving schema:', path, content);
     setSchemaContent(content);
+    setEditedSchemaContent(content);
+    setIsDirtySchema(false);
   }, []);
 
   return (
@@ -92,9 +100,13 @@ const App: React.FC = () => {
                 schemaPath && (
                   <SchemaEditor
                     schemaPath={schemaPath}
-                    initialSchema={schemaContent}
+                    initialSchema={editedSchemaContent}
                     onSave={(content) => saveSchema(schemaPath, content)}
                     active={activeTab === 'schema'}
+                    onChange={(content) => {
+                      setEditedSchemaContent(content);
+                      setIsDirtySchema(true);
+                    }}
                   />
                 )
               )}
