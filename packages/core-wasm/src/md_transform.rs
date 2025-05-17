@@ -166,156 +166,179 @@ fn remove_frontmatter(md: &str) -> String {
     }
 }
 
-/// Markdownの見出し構造をYAML互換の階層構造に変換する
-///
-/// # 引数
-/// * `md_str` - Markdown文字列
-///
-/// # 戻り値
-/// * YAML形式の文字列（スキーマに適合した構造）
-///
-/// # 動作概要
-/// 1. フロントマターがある場合はそれを除去
-/// 2. Markdownをパースして見出し構造を解析
-/// 3. 見出し構造をスキーマに適合した形式に変換:
-///    - H1 → title フィールド
-///    - H2, H3以下 → sections配列の要素
-/// 4. 得られた構造をYAML文字列にシリアライズ
 pub fn md_headings_to_yaml(md: &str) -> String {
     // 1. フロントマターを落とす
     let cleaned_md = remove_frontmatter(md);
     let trimmed_md = cleaned_md.trim();
 
-    // 最初に全てのライン（行）を処理しやすい形に格納
+    // データ構造を構築
+    let mut document = Document::default();
+    let mut found_title = false;
+
+    // マークダウンの行ごとの処理
     let lines: Vec<&str> = trimmed_md.lines().collect();
     
-    // 見出しを検出して階層構造を作成
-    let mut doc = Document::default();
-    let mut current_title: Option<String> = None;
-    let mut current_section: Option<*mut Section> = None;
-    let mut section_stack: Vec<(*mut Section, usize)> = Vec::new(); // (section pointer, level)
-    let mut content_lines: Vec<String> = Vec::new();
-    
+    // 各行を解析して見出しレベルを判定
     let mut i = 0;
-    while i < lines.len() {
-        let line = lines[i].trim();
+    let mut doc_content = String::new();
+    
+    // マークダウンから見出し構造を抽出する関数
+    fn extract_headings(
+        lines: &[&str], 
+        start_idx: &mut usize, 
+        current_level: usize,
+        target_level: usize
+    ) -> Vec<Section> {
+        let mut sections = Vec::new();
+        let mut current_section: Option<Section> = None;
+        let mut section_content = String::new();
         
-        // 見出し行の処理
-        if line.starts_with("# ") && current_title.is_none() {
-            // H1 (タイトル)の処理
-            current_title = Some(line[2..].trim().to_string());
-            doc.title = current_title.clone().unwrap_or_default();
-        } else if line.starts_with("## ") {
-            // H2の処理
-            if !content_lines.is_empty() {
-                // 前のセクションのコンテンツを保存
-                if let Some(ptr) = current_section {
-                    unsafe {
-                        (*ptr).content = content_lines.join("\n").trim().to_string();
-                    }
-                } else {
-                    doc.content = content_lines.join("\n").trim().to_string();
-                }
-                content_lines.clear();
-            }
+        while *start_idx < lines.len() {
+            let line = lines[*start_idx].trim();
             
-            // スタックをH2レベルに調整
-            while let Some((_, level)) = section_stack.last() {
-                if *level >= 2 {
-                    section_stack.pop();
-                } else {
-                    break;
-                }
-            }
-            
-            // 新しいH2セクションを作成
-            let new_section = Section {
-                title: line[3..].trim().to_string(),
-                content: String::new(),
-                sections: Vec::new(),
-            };
-            
-            // ルートに直接追加
-            doc.sections.push(new_section);
-            let new_ptr = doc.sections.last_mut().unwrap() as *mut Section;
-            section_stack.push((new_ptr, 2));
-            current_section = Some(new_ptr);
-            
-        } else if line.starts_with("### ") {
-            // H3の処理
-            if !content_lines.is_empty() {
-                // 前のセクションのコンテンツを保存
-                if let Some(ptr) = current_section {
-                    unsafe {
-                        (*ptr).content = content_lines.join("\n").trim().to_string();
-                    }
-                }
-                content_lines.clear();
-            }
-            
-            // スタックをH3レベルに調整
-            while let Some((_, level)) = section_stack.last() {
-                if *level >= 3 {
-                    section_stack.pop();
-                } else {
-                    break;
-                }
-            }
-            
-            // 新しいH3セクションを作成
-            let new_section = Section {
-                title: line[4..].trim().to_string(),
-                content: String::new(),
-                sections: Vec::new(),
-            };
-            
-            if let Some((parent_ptr, _)) = section_stack.last() {
-                // 親に追加
-                unsafe {
-                    (*(*parent_ptr)).sections.push(new_section);
-                    let new_ptr = (*(*parent_ptr)).sections.last_mut().unwrap() as *mut Section;
-                    section_stack.push((new_ptr, 3));
-                    current_section = Some(new_ptr);
-                }
+            // 見出しレベルを判定
+            let heading_level = if line.starts_with("##### ") {
+                5
+            } else if line.starts_with("#### ") {
+                4
+            } else if line.starts_with("### ") {
+                3
+            } else if line.starts_with("## ") {
+                2
+            } else if line.starts_with("# ") {
+                1
             } else {
-                // スタックが空の場合（異常な状態）
-                // H2が無いのにH3が来た場合、ルートに追加
-                doc.sections.push(new_section);
-                let new_ptr = doc.sections.last_mut().unwrap() as *mut Section;
-                section_stack.push((new_ptr, 3));
-                current_section = Some(new_ptr);
+                0  // 見出しでない
+            };
+            
+            // 現在の見出しと同じか上のレベルなら、処理を終了
+            if heading_level > 0 && heading_level <= target_level {
+                // 現在のセクションをコンテンツと一緒に保存して終了
+                if let Some(mut section) = current_section.take() {
+                    section.content = section_content.trim().to_string();
+                    sections.push(section);
+                }
+                return sections;
             }
-        } else {
-            // 通常のコンテンツ行
-            content_lines.push(line.to_string());
+            
+            // 対象レベルの1つ下の見出しを検出
+            if heading_level == target_level + 1 {
+                // 前のセクションがあれば保存
+                if let Some(mut section) = current_section.take() {
+                    section.content = section_content.trim().to_string();
+                    sections.push(section);
+                }
+                
+                // 新しいセクションを作成
+                let title = line[(heading_level + 1)..].trim().to_string();
+                current_section = Some(Section {
+                    title,
+                    content: String::new(),
+                    sections: Vec::new(),
+                });
+                section_content = String::new();
+            } 
+            // さらに下の階層の見出しを検出した場合は再帰的に処理
+            else if heading_level > target_level + 1 {
+                // 前のセクションがなければ作成
+                if current_section.is_none() {
+                    current_section = Some(Section {
+                        title: String::new(),
+                        content: section_content.trim().to_string(),
+                        sections: Vec::new(),
+                    });
+                    section_content = String::new();
+                }
+                
+                // 現在の位置を記録
+                let current_pos = *start_idx;
+                
+                // 子セクションを再帰的に処理
+                let sub_sections = extract_headings(lines, start_idx, heading_level, target_level + 1);
+                
+                // 子セクションを現在のセクションに追加
+                if let Some(section) = &mut current_section {
+                    section.sections = sub_sections;
+                }
+                
+                // 再帰呼び出しが位置を進めなかった場合は、自分で進める
+                if current_pos == *start_idx {
+                    *start_idx += 1;
+                }
+                
+                continue;
+            } 
+            // 普通のテキスト行
+            else {
+                if let Some(_) = current_section {
+                    // 現在のセクションにコンテンツとして追加
+                    if !section_content.is_empty() {
+                        section_content.push('\n');
+                    }
+                    section_content.push_str(line);
+                } else {
+                    // セクション外のテキストは上位レベルのコンテンツに
+                    if !section_content.is_empty() {
+                        section_content.push('\n');
+                    }
+                    section_content.push_str(line);
+                }
+            }
+            
+            *start_idx += 1;
         }
         
+        // 最後のセクションを追加
+        if let Some(mut section) = current_section {
+            section.content = section_content.trim().to_string();
+            sections.push(section);
+        }
+        
+        sections
+    }
+    
+    // まず最初のH1を探してタイトルとして使用
+    while i < lines.len() {
+        let line = lines[i].trim();
+        if line.starts_with("# ") {
+            document.title = line[2..].trim().to_string();
+            found_title = true;
+            i += 1;
+            break;
+        }
         i += 1;
     }
     
-    // 最後のコンテンツを処理
-    if !content_lines.is_empty() {
-        if let Some(ptr) = current_section {
-            unsafe {
-                (*ptr).content = content_lines.join("\n").trim().to_string();
-            }
-        } else if current_title.is_some() {
-            // タイトルがあってセクションがない場合
-            doc.content = content_lines.join("\n").trim().to_string();
-        } else {
-            // タイトルもない場合
-            doc.content = trimmed_md.to_string();
+    // タイトルが見つからなければデフォルト値を設定
+    if !found_title {
+        document.title = "Untitled Document".to_string();
+        i = 0;  // 最初から処理
+    }
+    
+    // タイトルと最初のH2の間のテキストはドキュメントコンテンツ
+    let mut content_start = i;
+    while i < lines.len() {
+        let line = lines[i].trim();
+        if line.starts_with("## ") {
+            break;
         }
+        i += 1;
     }
     
-    // 空の配列も含め、常にセクションフィールドを含めるためのハック
-    // これにより、セクションが空でも常に "sections: []" が出力されるようになる
-    if doc.sections.is_empty() {
-        doc.sections = Vec::new();
+    // ドキュメントコンテンツを抽出
+    if i > content_start {
+        doc_content = lines[content_start..i].join("\n").trim().to_string();
     }
     
-    // YAML文字列に変換
-    serde_yaml::to_string(&doc).unwrap_or_else(|_| "title: Error".into())
+    // 残りはセクションとして処理
+    let mut start_idx = content_start;
+    document.sections = extract_headings(&lines, &mut start_idx, 0, 1);
+    document.content = doc_content;
+    
+    // YAMLに変換して返す
+    serde_yaml::to_string(&document).unwrap_or_else(|e| {
+        format!("Error serializing to YAML: {}", e)
+    })
 }
 
 #[cfg(test)]
@@ -390,9 +413,12 @@ Nested content"#;
     fn test_md_headings_to_yaml_no_sections() {
         let md = "# Only Title";
         let yaml = md_headings_to_yaml(md);
-        
+
         // デバッグ出力
-        eprintln!("ACTUAL YAML OUTPUT (test_md_headings_to_yaml_no_sections):\n{}", yaml);
+        eprintln!(
+            "ACTUAL YAML OUTPUT (test_md_headings_to_yaml_no_sections):\n{}",
+            yaml
+        );
 
         assert!(yaml.contains("title: Only Title"));
         assert!(yaml.contains("sections:"));
@@ -454,7 +480,9 @@ Content
     schema_path: ./schema.yaml
     validated: true
     ---
-    # Sample Note with Relative Schema
+    # Sample Note with Deep Nesting
+
+    This is the main document content.
 
     ## Introduction
     This is a sample note.
@@ -462,53 +490,105 @@ Content
     ## Features
     Shows appropriate error messages
 
+    ### Advanced Features
+    These are advanced features.
+
+    #### Sub-feature 1
+    This is a sub-feature.
+
+    ##### Detail Point 1
+    Very detailed explanation.
+
+    ##### Detail Point 2
+    Another detailed explanation.
+
+    #### Sub-feature 2
+    Another sub-feature.
+
+    ### Basic Features
+    These are basic features.
+
     ## Conclusion
     The relative schema path feature makes the note more portable.
 
-    ### Hoge
+    ### Final Thoughts
+    Some final thoughts.
     "#;
 
         // デバッグ用：元のMarkdownを出力
-    eprintln!("ORIGINAL MARKDOWN (Cleaned):\n{}", remove_frontmatter(md));
+        eprintln!("ORIGINAL MARKDOWN (Cleaned):\n{}", remove_frontmatter(md));
 
-    // 明示的に期待する YAML オブジェクトを構築
-    let expected_doc = Document {
-        title: "Sample Note with Relative Schema".to_string(),
-        content: "".to_string(),
-        sections: vec![
-            Section {
-                title: "Introduction".to_string(),
-                content: "This is a sample note.".to_string(),
-                sections: vec![],
-            },
-            Section {
-                title: "Features".to_string(),
-                content: "Shows appropriate error messages".to_string(),
-                sections: vec![],
-            },
-            Section {
-                title: "Conclusion".to_string(),
-                content: "The relative schema path feature makes the note more portable.".to_string(),
-                sections: vec![
-                    Section {
-                        title: "Hoge".to_string(),
-                        content: "".to_string(),
-                        sections: vec![],
-                    },
-                ],
-            },
-        ],
-    };
-    
-    // 期待値をYAMLに変換
-    let expected_yaml = serde_yaml::to_string(&expected_doc).unwrap();
-    let expected = serde_yaml::from_str::<serde_yaml::Value>(&expected_yaml).unwrap();
+        // 明示的に期待する YAML オブジェクトを構築
+        let expected_doc = Document {
+            title: "Sample Note with Deep Nesting".to_string(),
+            content: "This is the main document content.".to_string(),
+            sections: vec![
+                Section {
+                    title: "Introduction".to_string(),
+                    content: "This is a sample note.".to_string(),
+                    sections: vec![],
+                },
+                Section {
+                    title: "Features".to_string(),
+                    content: "Shows appropriate error messages".to_string(),
+                    sections: vec![
+                        Section {
+                            title: "Advanced Features".to_string(),
+                            content: "These are advanced features.".to_string(),
+                            sections: vec![
+                                Section {
+                                    title: "Sub-feature 1".to_string(),
+                                    content: "This is a sub-feature.".to_string(),
+                                    sections: vec![
+                                        Section {
+                                            title: "Detail Point 1".to_string(),
+                                            content: "Very detailed explanation.".to_string(),
+                                            sections: vec![],
+                                        },
+                                        Section {
+                                            title: "Detail Point 2".to_string(),
+                                            content: "Another detailed explanation.".to_string(),
+                                            sections: vec![],
+                                        },
+                                    ],
+                                },
+                                Section {
+                                    title: "Sub-feature 2".to_string(),
+                                    content: "Another sub-feature.".to_string(),
+                                    sections: vec![],
+                                },
+                            ],
+                        },
+                        Section {
+                            title: "Basic Features".to_string(),
+                            content: "These are basic features.".to_string(),
+                            sections: vec![],
+                        },
+                    ],
+                },
+                Section {
+                    title: "Conclusion".to_string(),
+                    content: "The relative schema path feature makes the note more portable.".to_string(),
+                    sections: vec![
+                        Section {
+                            title: "Final Thoughts".to_string(),
+                            content: "Some final thoughts.".to_string(),
+                            sections: vec![],
+                        },
+                    ],
+                },
+            ],
+        };
 
-    // 実際出力を検証
-    let actual_yaml = md_headings_to_yaml(md);
-    eprintln!("ACTUAL YAML OUTPUT:\n{}", actual_yaml);
-    let actual = serde_yaml::from_str::<serde_yaml::Value>(&actual_yaml).unwrap();
+        // 期待値をYAMLに変換
+        let expected_yaml = serde_yaml::to_string(&expected_doc).unwrap();
+        let expected = serde_yaml::from_str::<serde_yaml::Value>(&expected_yaml).unwrap();
 
-    assert_eq!(actual, expected);
+        // 実際出力を検証
+        let actual_yaml = md_headings_to_yaml(md);
+        eprintln!("ACTUAL YAML OUTPUT:\n{}", actual_yaml);
+        let actual = serde_yaml::from_str::<serde_yaml::Value>(&actual_yaml).unwrap();
+
+        assert_eq!(actual, expected);
     }
 }
