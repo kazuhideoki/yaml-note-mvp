@@ -49,10 +49,10 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   // 初期スキーマが変更されたとき、内容を更新（保存されたスキーマの場合のみ）
   useEffect(() => {
     // 初めてロードされたときだけ初期値をセット
-    if (initialSchema && content === '' && !isDirty) {
+    if (initialSchema && !isDirty) {
       setContent(initialSchema);
     }
-  }, [initialSchema, content, isDirty]);
+  }, [initialSchema, isDirty]);
 
   // スキーマ検証ロジック
   useEffect(() => {
