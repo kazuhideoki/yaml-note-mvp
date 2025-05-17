@@ -38,7 +38,11 @@ describe('MarkdownEditor', () => {
   test('正常なマークダウンの場合、エラーバッジが表示されない', async () => {
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 
@@ -90,7 +94,18 @@ validated: true
 
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+          validationErrors={[
+            {
+              line: 2,
+              message: 'Frontmatter validation error: Invalid schema_path',
+              path: 'schema_path',
+            },
+          ]}
+        />
       </LoggerProvider>
     );
 
@@ -119,16 +134,20 @@ validated: invalid
     // ドロップイベントを発火
     fireEvent.drop(dropArea, { dataTransfer });
 
-    // エラーバッジが表示されることを確認
+    // We need to wait for the content to be set and validationErrors to be displayed
     await waitFor(() => {
-      expect(screen.getByText(/バリデーションエラー/)).toBeInTheDocument();
+      expect(screen.getByText('バリデーションエラー (1)')).toBeInTheDocument();
     });
   });
 
   test('ファイル以外をドロップした場合は何も起こらない', async () => {
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 
@@ -165,7 +184,11 @@ validated: invalid
 
     render(
       <LoggerProvider>
-        <MarkdownEditor />
+        <MarkdownEditor 
+          initialContent=""
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+        />
       </LoggerProvider>
     );
 

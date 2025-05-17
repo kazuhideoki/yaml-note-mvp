@@ -144,21 +144,3 @@ export const fetchSchema = async (schemaPath: string, basePath?: string): Promis
     );
   }
 };
-
-/**
- * キャッシュからスキーマを削除
- *
- * @param {string} schemaPath - 削除するスキーマのパス
- * @param {string} basePath - 相対パス解決のためのベースパス（オプション）
- */
-export const invalidateSchemaCache = (schemaPath: string, basePath?: string): void => {
-  const cacheKey = `${basePath || ''}:${schemaPath}`;
-  delete schemaCache[cacheKey];
-};
-
-/**
- * キャッシュ全体をクリア
- */
-export const clearSchemaCache = (): void => {
-  Object.keys(schemaCache).forEach(key => delete schemaCache[key]);
-};
