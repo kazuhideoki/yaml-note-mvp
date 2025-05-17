@@ -202,12 +202,6 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         <>
           <div className="flex justify-between items-center p-2 bg-gray-100">
             <span className="text-sm text-gray-700">{fileName || 'Untitled.md'}</span>
-            <button
-              className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
-              onClick={handleSave}
-            >
-              保存
-            </button>
           </div>
           <CodeMirror
             value={content}

@@ -65,35 +65,6 @@ describe('SchemaEditor', () => {
     expect(textarea).toHaveValue(initialSchema);
   });
 
-  /**
-   * 保存ボタンが機能するかテストする
-   */
-  test('save button calls onSave with current content', async () => {
-    render(
-      <SchemaEditor 
-        schemaPath={schemaPath}
-        initialSchema={initialSchema}
-        onSave={onSaveMock}
-        active={true}
-      />
-    );
-    
-    // isDirtyをtrueにするために、まずコンテンツを変更する必要がある
-    const textarea = screen.getByTestId('codemirror-textarea');
-    const newContent = initialSchema + "\n# added line";
-    
-    await act(async () => {
-      fireEvent.change(textarea, { target: { value: newContent } });
-    });
-    
-    // 保存ボタンをクリック (isDirtyになったので有効になっているはず)
-    const saveButton = screen.getByText(/保存/);
-    await act(async () => {
-      fireEvent.click(saveButton);
-    });
-    
-    expect(onSaveMock).toHaveBeenCalledWith(newContent);
-  });
   
   /**
    * スキーマパスが表示されるかテストする

@@ -52,12 +52,18 @@ export function useFileAccess(): UseFileAccessReturn {
   });
 
   // File System Access APIのサポート確認
-  const isFileSystemAccessSupported = typeof window !== 'undefined' && 'showOpenFilePicker' in window;
+/**
+ * File System Access API が利用可能かを判定する
+ *
+ * @returns {boolean} 利用可能な場合は true
+ */
+const isFileSystemAccessSupported = () =>
+  typeof window !== 'undefined' && 'showOpenFilePicker' in window;
   
   // 名前を付けて保存（宣言のみ、実装は後ほど）
   const saveFileAs = useCallback(async (fileType: 'markdown' | 'schema', content: string): Promise<boolean> => {
     try {
-      if (!isFileSystemAccessSupported) {
+      if (!isFileSystemAccessSupported()) {
         // フォールバック: Blobを作成し、aタグを使用してダウンロード
         log('warn', 'fsapi_not_supported', {
           action: 'save_as',
@@ -130,12 +136,12 @@ export function useFileAccess(): UseFileAccessReturn {
       });
       return false;
     }
-  }, [isFileSystemAccessSupported, log]);
+  }, [log]);
 
   // ファイルを開く
   const openFile = useCallback(async (fileType: 'markdown' | 'schema'): Promise<boolean> => {
     try {
-      if (!isFileSystemAccessSupported) {
+      if (!isFileSystemAccessSupported()) {
         // フォールバック: input[type=file]を使用
         log('warn', 'fsapi_not_supported', {
           action: 'open',
@@ -243,7 +249,7 @@ export function useFileAccess(): UseFileAccessReturn {
       });
       return false;
     }
-  }, [isFileSystemAccessSupported, log]);
+  }, [log]);
 
   // ファイルを保存
   const saveFile = useCallback(async (fileType: 'markdown' | 'schema', content: string): Promise<boolean> => {
