@@ -5,7 +5,6 @@
 //! - JSONスキーマとしての検証（メタスキーマに対する検証）
 
 use serde_json::Value;
-use serde_yaml;
 use crate::error::{ErrorInfo, ValidationResult};
 
 /// JSONスキーマをコンパイルして検証する
@@ -83,12 +82,12 @@ fn validate_schema_basics(schema: &Value) -> Result<(), String> {
     }
 
     // objectタイプの場合はpropertiesフィールドが必要
-    if type_str == "object" && !schema.get("properties").is_some() {
+    if type_str == "object" && schema.get("properties").is_none() {
         return Err("スキーマ構文エラー: objectタイプのスキーマには 'properties' フィールドが必要です".to_string());
     }
 
     // arrayタイプの場合はitemsフィールドが必要
-    if type_str == "array" && !schema.get("items").is_some() {
+    if type_str == "array" && schema.get("items").is_none() {
         return Err("スキーマ構文エラー: arrayタイプのスキーマには 'items' フィールドが必要です".to_string());
     }
 
@@ -116,7 +115,7 @@ fn validate_schema_structure(schema: &Value) -> Result<(), String> {
             }
 
             // プロパティにtypeフィールドがあるか確認
-            if !prop_schema.get("type").is_some() {
+            if prop_schema.get("type").is_none() {
                 return Err(format!(
                     "スキーマ構文エラー: プロパティ '{}' に 'type' フィールドがありません", 
                     prop_name

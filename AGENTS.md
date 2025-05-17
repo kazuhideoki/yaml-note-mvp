@@ -55,14 +55,18 @@ pnpm build
 ### Testing and Validation
 
 ```bash
+# Run type checking
+pnpm typecheck
+
 # Run all tests
 pnpm test
 
 # Run Rust tests for core-wasm
 cargo test -p core-wasm
 
-# Run type checking
-pnpm typecheck
+# Run lintering and formatting checks
+cargo clippy -- -D warnings
+
 ```
 
 ## Development Workflow

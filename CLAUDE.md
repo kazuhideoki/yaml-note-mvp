@@ -58,14 +58,17 @@ pnpm build
 # Run all tests
 pnpm test
 
-# Run Rust tests for core-wasm
-cargo test -p core-wasm
-
 # Run type checking
 pnpm typecheck
 
 # Run linters
 pnpm lint
+
+# Run Rust tests for core-wasm
+cargo test -p core-wasm
+
+# Run lintering and formatting checks
+cargo clippy -- -D warnings
 ```
 
 ## Development Workflow

@@ -35,7 +35,7 @@ fn remove_frontmatter(md: &str) -> String {
     let mut lines = md.lines();
 
     if lines.next().map(|l| l.trim()) == Some("---") {
-        while let Some(l) = lines.next() {
+        for l in lines.by_ref() {
             if l.trim() == "---" {
                 break;
             }
@@ -101,68 +101,72 @@ pub fn md_headings_to_yaml(md: &str) -> String {
                 return sections;
             }
 
-            // 対象レベルの1つ下の見出しを検出
-            if heading_level == target_level + 1 {
-                // 前のセクションがあれば保存
-                if let Some(mut section) = current_section.take() {
-                    section.content = section_content.trim().to_string();
-                    sections.push(section);
-                }
+            // 見出しレベルに基づいて処理を分岐
+            match heading_level.cmp(&(target_level + 1)) {
+                std::cmp::Ordering::Equal => {
+                    // 対象レベルの1つ下の見出しを検出
+                    // 前のセクションがあれば保存
+                    if let Some(mut section) = current_section.take() {
+                        section.content = section_content.trim().to_string();
+                        sections.push(section);
+                    }
 
-                // 新しいセクションを作成
-                let title = line[(heading_level + 1)..].trim().to_string();
-                current_section = Some(Section {
-                    title,
-                    content: String::new(),
-                    sections: Vec::new(),
-                });
-                section_content = String::new();
-            }
-            // さらに下の階層の見出しを検出した場合は再帰的に処理
-            else if heading_level > target_level + 1 {
-                // 前のセクションがなければ作成
-                if current_section.is_none() {
+                    // 新しいセクションを作成
+                    let prefix = &line[0..heading_level];
+                    let title = line.strip_prefix(prefix).unwrap_or(line).trim().to_string();
                     current_section = Some(Section {
-                        title: String::new(),
-                        content: section_content.trim().to_string(),
+                        title,
+                        content: String::new(),
                         sections: Vec::new(),
                     });
                     section_content = String::new();
                 }
-
-                // 現在の位置を記録
-                let current_pos = *start_idx;
-
-                // 子セクションを再帰的に処理
-                let sub_sections =
-                    extract_headings(lines, start_idx, heading_level, target_level + 1);
-
-                // 子セクションを現在のセクションに追加
-                if let Some(section) = &mut current_section {
-                    section.sections = sub_sections;
-                }
-
-                // 再帰呼び出しが位置を進めなかった場合は、自分で進める
-                if current_pos == *start_idx {
-                    *start_idx += 1;
-                }
-
-                continue;
-            }
-            // 普通のテキスト行
-            else {
-                if let Some(_) = current_section {
-                    // 現在のセクションにコンテンツとして追加
-                    if !section_content.is_empty() {
-                        section_content.push('\n');
+                std::cmp::Ordering::Greater => {
+                    // さらに下の階層の見出しを検出した場合は再帰的に処理
+                    // 前のセクションがなければ作成
+                    if current_section.is_none() {
+                        current_section = Some(Section {
+                            title: String::new(),
+                            content: section_content.trim().to_string(),
+                            sections: Vec::new(),
+                        });
+                        section_content = String::new();
                     }
-                    section_content.push_str(line);
-                } else {
-                    // セクション外のテキストは上位レベルのコンテンツに
-                    if !section_content.is_empty() {
-                        section_content.push('\n');
+
+                    // 現在の位置を記録
+                    let current_pos = *start_idx;
+
+                    // 子セクションを再帰的に処理
+                    let sub_sections =
+                        extract_headings(lines, start_idx, heading_level, target_level + 1);
+
+                    // 子セクションを現在のセクションに追加
+                    if let Some(section) = &mut current_section {
+                        section.sections = sub_sections;
                     }
-                    section_content.push_str(line);
+
+                    // 再帰呼び出しが位置を進めなかった場合は、自分で進める
+                    if current_pos == *start_idx {
+                        *start_idx += 1;
+                    }
+
+                    continue;
+                }
+                std::cmp::Ordering::Less => {
+                    // 普通のテキスト行
+                    if current_section.is_some() {
+                        // 現在のセクションにコンテンツとして追加
+                        if !section_content.is_empty() {
+                            section_content.push('\n');
+                        }
+                        section_content.push_str(line);
+                    } else {
+                        // セクション外のテキストは上位レベルのコンテンツに
+                        if !section_content.is_empty() {
+                            section_content.push('\n');
+                        }
+                        section_content.push_str(line);
+                    }
                 }
             }
 
@@ -181,8 +185,8 @@ pub fn md_headings_to_yaml(md: &str) -> String {
     // まず最初のH1を探してタイトルとして使用
     while i < lines.len() {
         let line = lines[i].trim();
-        if line.starts_with("# ") {
-            document.title = line[2..].trim().to_string();
+        if let Some(title_text) = line.strip_prefix("# ") {
+            document.title = title_text.trim().to_string();
             found_title = true;
             i += 1;
             break;
