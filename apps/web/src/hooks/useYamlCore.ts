@@ -13,6 +13,7 @@ interface CoreWasmType {
   md_headings_to_yaml: (md: string) => string; // 追加: 見出し構造を解析してYAML化する関数
   yaml_to_md: (yaml: string) => string;
   parse_and_validate_frontmatter: (md: string) => string;
+  compile_schema: (schema: string) => string; // 追加: スキーマ自体の検証
   version: () => string;
   apply_patch: (yaml: string, patch: string) => string;
 }
@@ -286,6 +287,43 @@ export function useYamlCore() {
     [instance, wasmLoaded]
   );
 
+  /**
+   * スキーマのコンパイル検証を行う
+   * 
+   * @param {string} schemaYaml - 検証するスキーマYAML
+   * @returns {Promise<ValidationError[]>} 検証エラーの配列
+   * 
+   * @description
+   * スキーマYAMLの構文とJSONスキーマとしての論理的正当性を検証する。
+   * WASMコアの`compile_schema`関数を使用。
+   */
+  const compileSchema = useCallback(
+    async (schemaYaml: string): Promise<ValidationError[]> => {
+      if (!instance || !wasmLoaded) {
+        throw new Error('WASM module not loaded');
+      }
+
+      try {
+        const resultJson = instance.compile_schema(schemaYaml);
+        const result = JSON.parse(resultJson);
+
+        if (!result.success) {
+          return result.errors.map((err: any) => ({
+            line: err.line || 0,
+            message: `スキーマ構文エラー: ${err.message}`,
+            path: err.path || '',
+          }));
+        }
+
+        return [];
+      } catch (error) {
+        console.error('Schema compilation error:', error);
+        throw error;
+      }
+    },
+    [instance, wasmLoaded]
+  );
+
   return {
     wasmLoaded,
     wasmLoading,
@@ -295,6 +333,7 @@ export function useYamlCore() {
     validateFrontmatter,
     markdownToYaml,
     validateYamlWithSchema,
+    compileSchema,
     applyPatch,
   };
 }

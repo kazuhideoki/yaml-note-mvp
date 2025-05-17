@@ -1,6 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+ * JSからのエラーメッセージをラップするためのコンバータ
+ */
+export function error_to_js_value(error: any): string;
+/**
  * YAML文字列をパースしてJSON文字列に変換する
  *
  * # 概要
@@ -82,6 +86,11 @@ export function validate_yaml(yaml_str: string, schema_str: string): string;
  *
  * # 戻り値
  * * バリデーション結果を含むJSON文字列
+ *
+ * # エラーケース
+ * - YAMLパースエラー
+ * - スキーマ構文エラー（無効なtypeフィールドなど）
+ * - 論理エラー（存在しないプロパティをrequiredに指定など）
  */
 export function compile_schema(schema_str: string): string;
 /**
@@ -118,7 +127,3 @@ export function parse_and_validate_frontmatter(md_str: string): string;
  *   - H3 → sections[].subsections 配列の要素
  */
 export function md_headings_to_yaml(md_str: string): string;
-/**
- * JSからのエラーメッセージをラップするためのコンバータ
- */
-export function error_to_js_value(error: any): string;

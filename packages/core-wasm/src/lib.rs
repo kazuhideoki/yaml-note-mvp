@@ -20,6 +20,7 @@ mod error;
 mod validate;
 mod md_transform;
 mod frontmatter;
+mod schema_compile;
 
 pub use error::{CoreError, ErrorInfo, ValidationResult};
 
@@ -150,9 +151,14 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
 ///
 /// # 戻り値
 /// * バリデーション結果を含むJSON文字列
+///
+/// # エラーケース
+/// - YAMLパースエラー
+/// - スキーマ構文エラー（無効なtypeフィールドなど）
+/// - 論理エラー（存在しないプロパティをrequiredに指定など）
 #[wasm_bindgen]
 pub fn compile_schema(schema_str: &str) -> String {
-    validate::compile_schema(schema_str)
+    schema_compile::compile_schema(schema_str)
 }
 
 /// バージョン情報を取得する
