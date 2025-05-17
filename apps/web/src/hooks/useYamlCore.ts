@@ -59,7 +59,7 @@ export function useYamlCore() {
 
       setWasmLoading(true);
       try {
-        // 動的インポート
+        // 動的インポート（キャッシュはViteが管理）
         const wasmModule = await import('core-wasm');
         const coreWasm = wasmModule as unknown as CoreWasmType;
         setInstance(coreWasm);

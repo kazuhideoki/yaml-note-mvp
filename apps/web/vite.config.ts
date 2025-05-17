@@ -20,8 +20,18 @@ export default defineConfig({
   build: {
     target: 'esnext'
   },
+  server: {
+    watch: {
+      // node_modules内のWASMパッケージの変更も監視
+      ignored: ['!**/node_modules/core-wasm/**'],
+    },
+    hmr: {
+      // HMRを強制的に有効化
+      overlay: true,
+    },
+  },
   optimizeDeps: {
-    // WASMの依存関係をビルドに含める
-    include: ['core-wasm']
+    // WASMの依存関係をキャッシュから除外
+    exclude: ['core-wasm'],
   }
 });
