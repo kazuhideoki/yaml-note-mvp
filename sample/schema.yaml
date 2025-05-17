@@ -6,8 +6,10 @@ properties:
   title:
     type: string
     description: ノートのタイトル
+    pattern: '^Sample Note with Relative Schema$'
   sections:
     type: array
+    minItems: 5
     items:
       type: object
       required:
@@ -17,6 +19,12 @@ properties:
         title:
           type: string
           description: セクションタイトル
+          enum:
+            - Introduction
+            - Features
+            - Hoge
+            - Fuga
+            - Piyo
         content:
           type: string
           description: セクションの内容

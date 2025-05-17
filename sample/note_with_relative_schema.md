@@ -13,6 +13,8 @@ This is a sample note that references a schema using a relative path.
 
 Supports relative schema paths
 
+## Piyo
+
 ### Hoge
 
 a

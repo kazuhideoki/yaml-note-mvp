@@ -1,11 +1,9 @@
 /**
- * スキーマエディタコンポーネント
- * @component
- * @description
- * YAMLスキーマを編集するためのCodeMirrorベースのエディタ。
- * スキーマの構文検証と保存機能を提供する。
+ * @file SchemaEditor.tsx
+ * @description YAMLスキーマを編集するためのエディタコンポーネント
+ * File System Access APIを使ったファイル操作に対応
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { yaml } from '@codemirror/lang-yaml';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -20,6 +18,7 @@ interface SchemaEditorProps {
   onSave: (content: string) => void;
   active: boolean;
   onChange?: (content: string) => void;
+  fileName?: string;
 }
 
 /**
@@ -31,6 +30,8 @@ interface SchemaEditorProps {
  * @param {string} props.initialSchema - 初期スキーマ内容
  * @param {(content: string) => void} props.onSave - 保存時のコールバック関数
  * @param {boolean} props.active - アクティブかどうか
+ * @param {(content: string) => void} [props.onChange] - 内容変更時のコールバック
+ * @param {string} [props.fileName] - ファイル名（File System Access API用）
  * @returns {JSX.Element | null} スキーマエディタコンポーネント
  */
 export const SchemaEditor: React.FC<SchemaEditorProps> = ({
@@ -39,12 +40,14 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   onSave,
   active,
   onChange,
+  fileName = '',
 }) => {
   const [content, setContent] = useState(initialSchema);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const { wasmLoaded, compileSchema } = useYamlCore();
   const [isDirty, setIsDirty] = useState(false);
   const { log } = useLogger();
+  const editorRef = useRef<any>(null);
 
   // 初期スキーマが変更されたとき、内容を更新（保存されたスキーマの場合のみ）
   useEffect(() => {
@@ -102,8 +105,9 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
     log('info', 'schema_saved', {
       schemaPath,
       hasErrors: errors.length > 0,
+      fileName: fileName || 'schema.yaml'
     });
-  }, [content, onSave, errors.length, schemaPath, log]);
+  }, [content, onSave, errors.length, schemaPath, fileName, log]);
 
   // ショートカットキー処理
   useEffect(() => {
@@ -133,17 +137,104 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   );
 
   // エラー行クリック時にエディタの該当行にジャンプ
-  const handleErrorClick = useCallback(() => {
-    // ここでエディタの該当行にフォーカスする処理を実装
-    // CodeMirrorの実装による
+  const handleErrorClick = useCallback((line: number) => {
+    if (editorRef.current && line > 0) {
+      try {
+        // CodeMirrorのAPIを使って指定行にジャンプ
+        const lineInfo = editorRef.current.view.state.doc.line(line);
+        editorRef.current.view.dispatch({
+          selection: { anchor: lineInfo.from },
+          scrollIntoView: true,
+        });
+      } catch (error) {
+        console.error('Failed to navigate to line:', error);
+      }
+    }
   }, []);
+
+  // ドラッグオーバーハンドラー
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  // ドロップハンドラー
+  const handleDrop = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      // File System Access API のファイルハンドルを試みる
+      if ('getAsFileSystemHandle' in event.dataTransfer.items[0] && 
+          typeof event.dataTransfer.items[0].getAsFileSystemHandle === 'function') {
+        try {
+          const handle = await (event.dataTransfer.items[0].getAsFileSystemHandle as () => Promise<FileSystemHandle>)() as FileSystemFileHandle;
+          
+          if (handle && handle.kind === 'file') {
+            const file = await handle.getFile();
+            
+            if (file.name.endsWith('.yaml') || file.name.endsWith('.yml')) {
+              const fileContent = await file.text();
+              setContent(fileContent);
+              setIsDirty(true);
+              if (onChange) {
+                onChange(fileContent);
+              }
+              
+              // getAsFileSystemHandleを使用した場合のログ
+              log('info', 'schema_file_loaded_with_handle', {
+                fileName: file.name,
+                fileSize: file.size,
+                handleAvailable: true
+              });
+              
+              return; // 成功したのでここで終了
+            }
+          }
+        } catch (error) {
+          console.error('Failed to get file handle:', error);
+          // 従来のテキスト読み込みにフォールバック（下記で処理）
+        }
+      }
+      
+      // 従来のファイル読み込み方法
+      const file = event.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const fileContent = e.target?.result as string;
+          setContent(fileContent);
+          setIsDirty(true);
+          if (onChange) {
+            onChange(fileContent);
+          }
+
+          // ファイル読み込みログ
+          log('info', 'schema_file_loaded', {
+            fileName: file.name,
+            fileSize: file.size,
+            handleAvailable: false
+          });
+        };
+        reader.readAsText(file);
+      } else if (file) {
+        // 非対応ファイル形式のログ
+        log('warn', 'unsupported_schema_file', {
+          fileName: file?.name,
+          fileType: file?.type,
+        });
+      }
+    },
+    [log, onChange]
+  );
 
   if (!active) return null;
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col" onDragOver={handleDragOver} onDrop={handleDrop}>
       <div className="flex justify-between items-center p-2 bg-gray-100">
-        <span className="text-sm text-gray-700">{schemaPath}</span>
+        <span className="text-sm text-gray-700">
+          {fileName ? fileName : schemaPath}
+        </span>
         <button
           className={`px-3 py-1 rounded text-sm ${
             isDirty ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'
@@ -163,6 +254,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
           extensions={[yaml()]}
           onChange={handleChange}
           className="text-base"
+          ref={editorRef}
         />
       </div>
 

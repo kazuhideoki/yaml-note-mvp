@@ -12,6 +12,7 @@ import EditorTabs, { TabType } from './components/EditorTabs';
 import { LoggerProvider } from './contexts/LoggerContext';
 import useValidator from './hooks/useValidator';
 import { fetchSchema } from './utils/schema';
+import { useFileAccess } from './hooks/useFileAccess';
 
 /**
  * YAML Note MVPのメインアプリケーションコンポーネント
@@ -28,7 +29,17 @@ const App: React.FC = () => {
   const [editedSchemaContent, setEditedSchemaContent] = useState<string>('');
   const [schemaPath, setSchemaPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('note');
-  const [isDirtySchema, setIsDirtySchema] = useState(false);
+  
+  // ファイル操作機能
+  const {
+    markdownFile,
+    schemaFile,
+    openFile,
+    saveFile,
+    saveFileAs,
+    updateContent,
+    isDirty
+  } = useFileAccess();
 
   // バリデーション状態
   const { errors, schemaPath: validatorSchemaPath } = useValidator(markdownContent);
@@ -39,7 +50,7 @@ const App: React.FC = () => {
       try {
         const schema = await fetchSchema(path);
         // 初回ロード時だけ編集内容も設定
-        if (!isDirtySchema || path !== schemaPath) {
+        if (!isDirty('schema') || path !== schemaPath) {
           setEditedSchemaContent(schema);
         }
         setSchemaPath(path);
@@ -48,7 +59,7 @@ const App: React.FC = () => {
         // エラー処理はここに追加
       }
     },
-    [isDirtySchema, schemaPath]
+    [isDirty, schemaPath]
   );
 
   // useValidator からスキーマパスを取得して自動ロード
@@ -58,26 +69,80 @@ const App: React.FC = () => {
     }
   }, [validatorSchemaPath, loadSchema, schemaPath]);
 
-  // マークダウン保存ハンドラ
-  const saveMarkdown = useCallback((content: string) => {
-    // ここにマークダウンファイル保存ロジックを実装
-    console.log('Saving markdown:', content);
+  // マークダウン変更ハンドラ
+  const handleMarkdownChange = useCallback((content: string) => {
     setMarkdownContent(content);
-  }, []);
+    updateContent('markdown', content);
+  }, [updateContent]);
+
+  // スキーマ変更ハンドラ
+  const handleSchemaChange = useCallback((content: string) => {
+    setEditedSchemaContent(content);
+    updateContent('schema', content);
+  }, [updateContent]);
+
+  // マークダウン保存ハンドラ
+  const saveMarkdown = useCallback(async (content: string) => {
+    const success = await saveFile('markdown', content);
+    if (success) {
+      setMarkdownContent(content);
+    }
+  }, [saveFile]);
 
   // スキーマ保存ハンドラ
-  const saveSchema = useCallback((path: string, content: string) => {
-    // ここにスキーマファイル保存ロジックを実装
-    console.log('Saving schema:', path, content);
-    setEditedSchemaContent(content);
-    setIsDirtySchema(false);
-  }, []);
+  const saveSchema = useCallback(async (_path: string, content: string) => {
+    const success = await saveFile('schema', content);
+    if (success) {
+      setEditedSchemaContent(content);
+    }
+  }, [saveFile]);
 
   return (
     <LoggerProvider>
       <div className="min-h-screen bg-white">
-        <header className="bg-gray-800 text-white p-4">
+        <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">YAML Note MVP</h1>
+          <div className="flex space-x-2">
+            <button
+              className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500"
+              onClick={async () => {
+                if (await openFile(activeTab === 'note' ? 'markdown' : 'schema')) {
+                  // ファイルが開かれた場合の処理
+                  if (activeTab === 'note') {
+                    setMarkdownContent(markdownFile.content);
+                  } else {
+                    setEditedSchemaContent(schemaFile.content);
+                  }
+                }
+              }}
+            >
+              開く
+            </button>
+            <button
+              className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500"
+              onClick={() => {
+                if (activeTab === 'note') {
+                  saveMarkdown(markdownContent);
+                } else if (schemaPath) {
+                  saveSchema(schemaPath, editedSchemaContent);
+                }
+              }}
+            >
+              保存
+            </button>
+            <button
+              className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500"
+              onClick={() => {
+                if (activeTab === 'note') {
+                  saveFileAs('markdown', markdownContent);
+                } else if (schemaPath) {
+                  saveFileAs('schema', editedSchemaContent);
+                }
+              }}
+            >
+              名前を付けて保存
+            </button>
+          </div>
         </header>
         <main className="container mx-auto p-4 h-[calc(100vh-8rem)]">
           <div className="flex flex-col h-full">
@@ -85,15 +150,20 @@ const App: React.FC = () => {
               currentSchemaPath={schemaPath}
               activeTab={activeTab}
               onTabChange={setActiveTab}
+              markdownDirty={isDirty('markdown')}
+              schemaDirty={isDirty('schema')}
+              markdownFileName={markdownFile.name || "Note.md"}
+              schemaFileName={schemaFile.name || "Schema.yaml"}
             />
 
             <div className="flex-grow">
               {activeTab === 'note' ? (
                 <MarkdownEditor
                   initialContent={markdownContent}
-                  onChange={setMarkdownContent}
+                  onChange={handleMarkdownChange}
                   onSave={saveMarkdown}
                   validationErrors={errors}
+                  fileName={markdownFile.name}
                 />
               ) : (
                 schemaPath && (
@@ -102,10 +172,8 @@ const App: React.FC = () => {
                     initialSchema={editedSchemaContent}
                     onSave={content => saveSchema(schemaPath, content)}
                     active={activeTab === 'schema'}
-                    onChange={content => {
-                      setEditedSchemaContent(content);
-                      setIsDirtySchema(true);
-                    }}
+                    onChange={handleSchemaChange}
+                    fileName={schemaFile.name}
                   />
                 )
               )}

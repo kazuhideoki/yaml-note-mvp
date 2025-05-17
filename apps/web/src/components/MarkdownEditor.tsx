@@ -1,3 +1,8 @@
+/**
+ * @file MarkdownEditor.tsx
+ * @description マークダウンエディタコンポーネント
+ * File System Access APIを使ったファイル操作に対応
+ */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
@@ -9,9 +14,10 @@ import { ValidationError } from '../hooks/validation-error.type';
 
 interface MarkdownEditorProps {
   initialContent: string;
-  onChange: (content: string) => void;
+  onChange?: (content: string) => void;
   onSave: (content: string) => void;
   validationErrors?: ValidationError[];
+  fileName?: string;
 }
 
 /**
@@ -23,17 +29,20 @@ interface MarkdownEditorProps {
  * @param {function} props.onChange - 内容変更時のコールバック
  * @param {function} props.onSave - 保存時のコールバック
  * @param {ValidationError[]} [props.validationErrors] - バリデーションエラー一覧
+ * @param {string} [props.fileName] - 現在開いているファイル名
  * @returns {JSX.Element}
  *
  * @description
  * CodeMirrorベースのMarkdownエディタを提供し、ファイルのドラッグ＆ドロップ、
  * フロントマター検証機能を備える。エラー状態の適切な管理とリセットを行う。
+ * File System Access APIを使ったファイル操作に対応。
  */
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   initialContent = '',
   onChange,
   onSave,
-  validationErrors = []
+  validationErrors = [],
+  fileName = ''
 }) => {
   const [content, setContent] = useState<string>(initialContent);
   const editorRef = useRef<any>(null);
@@ -67,7 +76,9 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   // CodeMirrorの内容変更ハンドラー
   const handleChange = useCallback((value: string) => {
     setContent(value);
-    onChange(value);
+    if (onChange) {
+      onChange(value);
+    }
   }, [onChange]);
 
   // エラーバッジクリック時の処理
@@ -92,9 +103,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   const handleSave = useCallback(() => {
     onSave(content);
     log('info', 'markdown_saved', {
-      contentLength: content.length
+      contentLength: content.length,
+      fileName
     });
-  }, [content, onSave, log]);
+  }, [content, onSave, log, fileName]);
 
   // ショートカットキー処理
   useEffect(() => {
@@ -111,9 +123,46 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   // ドロップハンドラー
   const handleDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
+    async (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
 
+      // File System Access API のファイルハンドルを試みる
+      if ('getAsFileSystemHandle' in event.dataTransfer.items[0] && 
+          typeof event.dataTransfer.items[0].getAsFileSystemHandle === 'function') {
+        try {
+          const handle = await (event.dataTransfer.items[0].getAsFileSystemHandle as () => Promise<FileSystemHandle>)() as FileSystemFileHandle;
+          
+          if (handle && handle.kind === 'file') {
+            const file = await handle.getFile();
+            
+            if (file.name.endsWith('.md')) {
+              // ファイルをロードする前にエラーをクリア
+              clearErrors();
+              
+              const content = await file.text();
+              setContent(content);
+              if (onChange) {
+                onChange(content);
+              }
+              
+              // getAsFileSystemHandleを使用した場合のログ
+              log('info', 'file_loaded_with_handle', {
+                fileName: file.name,
+                fileSize: file.size,
+                type: 'markdown',
+                handleAvailable: true
+              });
+              
+              return; // 成功したのでここで終了
+            }
+          }
+        } catch (error) {
+          console.error('Failed to get file handle:', error);
+          // 従来のテキスト読み込みにフォールバック（下記で処理）
+        }
+      }
+      
+      // 従来のファイル読み込み方法
       const file = event.dataTransfer.files[0];
       if (file && file.name.endsWith('.md')) {
         const reader = new FileReader();
@@ -123,17 +172,20 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
           const content = e.target?.result as string;
           setContent(content);
-          onChange(content);
+          if (onChange) {
+            onChange(content);
+          }
 
           // ファイル読み込みログ
           log('info', 'file_loaded', {
             fileName: file.name,
             fileSize: file.size,
             type: 'markdown',
+            handleAvailable: false
           });
         };
         reader.readAsText(file);
-      } else {
+      } else if (file) {
         // 非対応ファイル形式のログ
         log('warn', 'unsupported_file', {
           fileName: file?.name,
@@ -148,9 +200,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     <div className="h-full w-full relative" onDragOver={handleDragOver} onDrop={handleDrop}>
       {content ? (
         <>
+          <div className="flex justify-between items-center p-2 bg-gray-100">
+            <span className="text-sm text-gray-700">{fileName || 'Untitled.md'}</span>
+            <button
+              className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
+              onClick={handleSave}
+            >
+              保存
+            </button>
+          </div>
           <CodeMirror
             value={content}
-            height="100%"
+            height="calc(100% - 40px)"
             theme={githubLight}
             extensions={[markdown()]}
             onChange={handleChange}
@@ -163,19 +224,12 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
               検証中...
             </div>
           )}
-          <div className="absolute top-4 right-4">
-            <button
-              className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
-              onClick={handleSave}
-            >
-              保存
-            </button>
-          </div>
         </>
       ) : (
         <div className="flex items-center justify-center h-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-md">
           <div className="text-center">
             <p className="text-gray-500">Markdownファイル (.md) をドラッグ＆ドロップしてください</p>
+            <p className="text-gray-400 text-sm mt-2">または「開く」ボタンをクリックしてファイルを選択</p>
           </div>
         </div>
       )}
