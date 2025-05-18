@@ -43,7 +43,3 @@ export function apply_patch(_yaml_str: string, _patch_str: string): string {
 export function version(): string {
   return '1.0.0-mock';
 }
-
-export function error_to_js_value(error: any): string {
-  return JSON.stringify({ message: String(error) });
-}

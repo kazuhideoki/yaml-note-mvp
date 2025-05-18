@@ -25,7 +25,7 @@ pub enum CoreError {
 
     #[error("Validation error: {0}")]
     ValidationError(String),
-    
+
     #[error("Frontmatter parse error: {0}")]
     FrontmatterParseError(String),
 
@@ -127,10 +127,4 @@ impl ValidationResult {
             r#"{"success":false,"errors":[{"line":0,"message":"Failed to serialize errors","path":""}]}"#.to_string()
         })
     }
-}
-
-/// JSからのエラーメッセージをラップするためのコンバータ
-#[wasm_bindgen]
-pub fn error_to_js_value(error: &JsValue) -> String {
-    format!("JS Error: {:?}", error)
 }

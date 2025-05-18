@@ -28,7 +28,7 @@ vi.mock('@uiw/react-codemirror', () => {
 describe('MarkdownEditor', () => {
   beforeEach(() => {
     // モックの初期設定
-    (yamlCore.useYamlCore as any).mockReturnValue({
+    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
@@ -39,11 +39,7 @@ describe('MarkdownEditor', () => {
   test('正常なマークダウンの場合、エラーバッジが表示されない', async () => {
     render(
       <LoggerProvider>
-        <MarkdownEditor 
-          initialContent=""
-          onChange={vi.fn()}
-          onSave={vi.fn()}
-        />
+        <MarkdownEditor initialContent="" onChange={vi.fn()} onSave={vi.fn()} />
       </LoggerProvider>
     );
 
@@ -81,7 +77,7 @@ validated: true
 
   test('不正なフロントマターの場合、エラーバッジが表示される', async () => {
     // フロントマターエラーを返すモック
-    (yamlCore.useYamlCore as any).mockReturnValue({
+    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
@@ -96,7 +92,7 @@ validated: true
 
     render(
       <LoggerProvider>
-        <MarkdownEditor 
+        <MarkdownEditor
           initialContent=""
           onChange={vi.fn()}
           onSave={vi.fn()}
@@ -147,11 +143,7 @@ validated: invalid
   test('ファイル以外をドロップした場合は何も起こらない', async () => {
     render(
       <LoggerProvider>
-        <MarkdownEditor 
-          initialContent=""
-          onChange={vi.fn()}
-          onSave={vi.fn()}
-        />
+        <MarkdownEditor initialContent="" onChange={vi.fn()} onSave={vi.fn()} />
       </LoggerProvider>
     );
 
@@ -180,7 +172,7 @@ validated: invalid
 
   test('WASMが未ロード状態でもエディタは使用可能', async () => {
     // WASMが未ロード状態を模擬
-    (yamlCore.useYamlCore as any).mockReturnValue({
+    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
       wasmLoaded: false,
       wasmLoading: true,
       error: null,
@@ -189,11 +181,7 @@ validated: invalid
 
     render(
       <LoggerProvider>
-        <MarkdownEditor 
-          initialContent=""
-          onChange={vi.fn()}
-          onSave={vi.fn()}
-        />
+        <MarkdownEditor initialContent="" onChange={vi.fn()} onSave={vi.fn()} />
       </LoggerProvider>
     );
 

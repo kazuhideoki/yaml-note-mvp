@@ -1,10 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * JSからのエラーメッセージをラップするためのコンバータ
- */
-export function error_to_js_value(error: any): string;
-/**
  * YAMLを指定されたスキーマに対してバリデーションする
  *
  * # 引数
