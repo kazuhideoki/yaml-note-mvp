@@ -17,15 +17,14 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  * @property {number} timestamp - イベント発生時刻（UNIXエポックms）
  * @property {LogLevel} level - ログレベル
  * @property {string} action - アクション名
- * @property {Record<string, any>} [details] - 追加情報
+ * @property {Record<string, unknown>} [details] - 追加情報
  * @property {string} sessionId - セッションID
  */
 export interface LogEvent {
   timestamp: number;
   level: LogLevel;
   action: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   sessionId: string;
 }
 
@@ -35,8 +34,7 @@ export interface LogEvent {
  */
 export interface LoggerContextType {
   /** ログ記録関数 */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log: (level: LogLevel, action: string, details?: Record<string, any>) => void;
+  log: (level: LogLevel, action: string, details?: Record<string, unknown>) => void;
   /** 現在のログイベント配列 */
   events: LogEvent[];
   /** ログのクリア */
@@ -82,8 +80,7 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const logEvent = (
     level: LogLevel,
     action: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    details?: Record<string, any>
+    details?: Record<string, unknown>
   ) => {
     const event: LogEvent = {
       timestamp: Date.now(),
