@@ -91,7 +91,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   // エラーバッジクリック時の処理
   const handleErrorClick = useCallback((line: number) => {
-    if (editorRef.current && line > 0) {
+    if (editorRef.current?.view && line > 0) {
       // CodeMirrorのAPIを使って指定行にジャンプ
       const lineInfo = editorRef.current.view.state.doc.line(line);
       editorRef.current.view.dispatch({

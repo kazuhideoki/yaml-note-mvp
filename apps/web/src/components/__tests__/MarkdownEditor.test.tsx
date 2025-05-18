@@ -4,6 +4,7 @@ import { LoggerProvider } from '../../contexts/LoggerContext';
 import * as yamlCore from '../../hooks/useYamlCore';
 import { ErrorCode } from '../../hooks/validation-error.type';
 import { vi, beforeEach, describe, test, expect } from 'vitest';
+import type { Mock } from 'vitest';
 
 // YamlCoreモックの設定
 vi.mock('../../hooks/useYamlCore', () => ({
@@ -28,7 +29,7 @@ vi.mock('@uiw/react-codemirror', () => {
 describe('MarkdownEditor', () => {
   beforeEach(() => {
     // モックの初期設定
-    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
+    (yamlCore.useYamlCore as Mock).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
@@ -77,7 +78,7 @@ validated: true
 
   test('不正なフロントマターの場合、エラーバッジが表示される', async () => {
     // フロントマターエラーを返すモック
-    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
+    (yamlCore.useYamlCore as Mock).mockReturnValue({
       wasmLoaded: true,
       wasmLoading: false,
       error: null,
@@ -172,7 +173,7 @@ validated: invalid
 
   test('WASMが未ロード状態でもエディタは使用可能', async () => {
     // WASMが未ロード状態を模擬
-    (yamlCore.useYamlCore as jest.Mock).mockReturnValue({
+    (yamlCore.useYamlCore as Mock).mockReturnValue({
       wasmLoaded: false,
       wasmLoading: true,
       error: null,
