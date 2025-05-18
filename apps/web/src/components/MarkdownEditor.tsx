@@ -49,7 +49,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onSave,
   validationErrors = [],
   validated = true,
-  fileName = ''
+  fileName = '',
 }) => {
   const [content, setContent] = useState<string>(initialContent);
   // CodeMirror インスタンスへの参照
@@ -79,15 +79,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     if (initialContent !== content) {
       setContent(initialContent);
     }
-  }, [initialContent]);
+  }, [content, initialContent]);
 
   // CodeMirrorの内容変更ハンドラー
-  const handleChange = useCallback((value: string) => {
-    setContent(value);
-    if (onChange) {
-      onChange(value);
-    }
-  }, [onChange]);
+  const handleChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      if (onChange) {
+        onChange(value);
+      }
+    },
+    [onChange]
+  );
 
   // エラーバッジクリック時の処理
   const handleErrorClick = useCallback((line: number) => {
@@ -112,7 +115,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     onSave(content);
     log('info', 'markdown_saved', {
       contentLength: content.length,
-      fileName
+      fileName,
     });
   }, [content, onSave, log, fileName]);
 
@@ -135,32 +138,36 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       event.preventDefault();
 
       // File System Access API のファイルハンドルを試みる
-      if ('getAsFileSystemHandle' in event.dataTransfer.items[0] && 
-          typeof event.dataTransfer.items[0].getAsFileSystemHandle === 'function') {
+      if (
+        'getAsFileSystemHandle' in event.dataTransfer.items[0] &&
+        typeof event.dataTransfer.items[0].getAsFileSystemHandle === 'function'
+      ) {
         try {
-          const handle = await (event.dataTransfer.items[0].getAsFileSystemHandle as () => Promise<FileSystemHandle>)() as FileSystemFileHandle;
-          
+          const handle = (await (
+            event.dataTransfer.items[0].getAsFileSystemHandle as () => Promise<FileSystemHandle>
+          )()) as FileSystemFileHandle;
+
           if (handle && handle.kind === 'file') {
             const file = await handle.getFile();
-            
+
             if (file.name.endsWith('.md')) {
               // ファイルをロードする前にエラーをクリア
               clearErrors();
-              
+
               const content = await file.text();
               setContent(content);
               if (onChange) {
                 onChange(content);
               }
-              
+
               // getAsFileSystemHandleを使用した場合のログ
               log('info', 'file_loaded_with_handle', {
                 fileName: file.name,
                 fileSize: file.size,
                 type: 'markdown',
-                handleAvailable: true
+                handleAvailable: true,
               });
-              
+
               return; // 成功したのでここで終了
             }
           }
@@ -169,7 +176,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           // 従来のテキスト読み込みにフォールバック（下記で処理）
         }
       }
-      
+
       // 従来のファイル読み込み方法
       const file = event.dataTransfer.files[0];
       if (file && file.name.endsWith('.md')) {
@@ -189,7 +196,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             fileName: file.name,
             fileSize: file.size,
             type: 'markdown',
-            handleAvailable: false
+            handleAvailable: false,
           });
         };
         reader.readAsText(file);
@@ -231,7 +238,9 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         <div className="flex items-center justify-center h-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-md">
           <div className="text-center">
             <p className="text-gray-500">Markdownファイル (.md) をドラッグ＆ドロップしてください</p>
-            <p className="text-gray-400 text-sm mt-2">または「開く」ボタンをクリックしてファイルを選択</p>
+            <p className="text-gray-400 text-sm mt-2">
+              または「開く」ボタンをクリックしてファイルを選択
+            </p>
           </div>
         </div>
       )}
