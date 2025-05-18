@@ -100,3 +100,29 @@ The project has completed all planned phases:
 | `FrontmatterValidation` | フロントマター検証エラー |
 | `SchemaValidation` | スキーマ検証エラー |
 | `Unknown` | その他のエラー |
+
+#### エラーコード変換メカニズム
+
+Rust/WASM 側では `ErrorCode` は数値として定義されていますが、TypeScript 側では文字列 Enum として定義されています。
+このギャップを埋めるため、`mapNumericToStringErrorCode` 関数を使用して数値から文字列への変換を行います。
+
+```typescript
+// 数値エラーコードを文字列に変換する関数
+export function mapNumericToStringErrorCode(code: unknown): ErrorCode {
+  if (typeof code !== 'number') {
+    return ErrorCode.Unknown;
+  }
+  
+  switch (code) {
+    case 0: return ErrorCode.YamlParse;
+    case 1: return ErrorCode.SchemaCompile;
+    case 2: return ErrorCode.FrontmatterParse;
+    case 3: return ErrorCode.FrontmatterValidation;
+    case 4: return ErrorCode.SchemaValidation;
+    case 5: default: return ErrorCode.Unknown;
+  }
+}
+```
+
+`ErrorBadge` コンポーネントでは、`normalizeErrorCode` ヘルパー関数を使って数値または文字列のエラーコードを正規化し、
+統一された方法でエラーコードを扱えるようにしています。
