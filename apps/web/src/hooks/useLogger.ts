@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { LoggerContext, LoggerContextType } from '../contexts/LoggerContext';
+import { LoggerContext, type LoggerContextType } from '../contexts/LoggerContext';
 
 /**
  * ロガーフック

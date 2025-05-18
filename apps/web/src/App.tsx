@@ -10,7 +10,7 @@ import MarkdownEditor from './components/MarkdownEditor';
 import SchemaEditor from './components/SchemaEditor';
 import EditorTabs, { TabType } from './components/EditorTabs';
 import ValidationToggle from './components/ValidationToggle';
-import { LoggerProvider } from './contexts/LoggerContext';
+import { LoggerProvider } from './contexts/LoggerProvider';
 import useValidator from './hooks/useValidator';
 import { fetchSchema } from './utils/schema';
 import { useFileAccess } from './hooks/useFileAccess';

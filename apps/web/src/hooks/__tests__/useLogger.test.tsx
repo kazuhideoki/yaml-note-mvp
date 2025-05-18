@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { LoggerProvider } from '../../contexts/LoggerContext';
+import { LoggerProvider } from '../../contexts/LoggerProvider';
 import { useLogger } from '../useLogger';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 

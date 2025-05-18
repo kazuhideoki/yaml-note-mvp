@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MarkdownEditor from '../MarkdownEditor';
-import { LoggerProvider } from '../../contexts/LoggerContext';
+import { LoggerProvider } from '../../contexts/LoggerProvider';
 import * as yamlCore from '../../hooks/useYamlCore';
 import { ErrorCode } from '../../hooks/validation-error.type';
 import { vi, beforeEach, describe, test, expect } from 'vitest';

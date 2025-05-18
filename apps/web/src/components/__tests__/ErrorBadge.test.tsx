@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ErrorBadge from '../ErrorBadge';
 import { ValidationError, ErrorCode } from '../../hooks/validation-error.type';
-import { LoggerProvider } from '../../contexts/LoggerContext';
+import { LoggerProvider } from '../../contexts/LoggerProvider';
 
 describe('ErrorBadge', () => {
   const mockErrors: ValidationError[] = [

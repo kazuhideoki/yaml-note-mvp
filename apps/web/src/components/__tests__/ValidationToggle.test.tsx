@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ValidationToggle } from '../ValidationToggle';
-import { LoggerProvider } from '../../contexts/LoggerContext';
+import { LoggerProvider } from '../../contexts/LoggerProvider';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 describe('ValidationToggle', () => {

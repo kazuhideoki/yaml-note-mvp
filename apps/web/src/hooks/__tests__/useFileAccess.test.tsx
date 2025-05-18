@@ -5,7 +5,7 @@
 
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useFileAccess } from '../useFileAccess';
-import { LoggerProvider } from '../../contexts/LoggerContext';
+import { LoggerProvider } from '../../contexts/LoggerProvider';
 import React from 'react';
 import { vi, describe, test, expect, beforeAll, beforeEach } from 'vitest';
 
