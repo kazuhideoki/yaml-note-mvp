@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { SchemaEditor } from '../SchemaEditor';
-import { vi } from 'vitest';
+import { vi, describe, test, beforeEach, expect } from 'vitest';
 
 // モックの作成
 vi.mock('../../hooks/useYamlCore', () => ({

@@ -12,6 +12,7 @@
 //! WASMバインディング経由でJavaScriptから利用されることを想定しています。
 
 use crate::error::{ErrorInfo, ValidationResult};
+use crate::error_code::ErrorCode;
 use serde_json::Value;
 
 use jsonschema_valid::schemas::Draft;
@@ -38,7 +39,7 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
     let yaml_value: Value = match serde_yaml::from_str(yaml_str) {
         Ok(v) => v,
         Err(e) => {
-            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json();
+            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e, ErrorCode::YamlParse)]).to_json();
         }
     };
 
@@ -46,7 +47,7 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
     let schema_value: Value = match serde_yaml::from_str(schema_str) {
         Ok(v) => v,
         Err(e) => {
-            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e)]).to_json();
+            return ValidationResult::error(vec![ErrorInfo::from_yaml_error(&e, ErrorCode::YamlParse)]).to_json();
         }
     };
 
@@ -58,6 +59,7 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
                 0,
                 format!("Schema compile error: {}", e),
                 "",
+                ErrorCode::SchemaCompile,
             )])
             .to_json();
         }
@@ -81,6 +83,7 @@ pub fn validate_yaml(yaml_str: &str, schema_str: &str) -> String {
                         line,
                         message: err.to_string(),
                         path,
+                        code: ErrorCode::SchemaValidation,
                     }
                 })
                 .collect();

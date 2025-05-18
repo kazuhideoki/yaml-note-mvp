@@ -8,7 +8,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { yaml } from '@codemirror/lang-yaml';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import { useYamlCore } from '../hooks/useYamlCore';
-import { ValidationError } from '../hooks/validation-error.type';
+import { ValidationError, ErrorCode } from '../hooks/validation-error.type';
 import ErrorBadge from './ErrorBadge';
 import useLogger from '../hooks/useLogger';
 
@@ -83,6 +83,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
             line: 0,
             message: `スキーマコンパイルエラー: ${error instanceof Error ? error.message : String(error)}`,
             path: '',
+            code: ErrorCode.SchemaCompile,
           },
         ]);
 

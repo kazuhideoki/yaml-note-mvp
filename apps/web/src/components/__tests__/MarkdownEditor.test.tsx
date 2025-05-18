@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MarkdownEditor from '../MarkdownEditor';
 import { LoggerProvider } from '../../contexts/LoggerContext';
 import * as yamlCore from '../../hooks/useYamlCore';
+import { ErrorCode } from '../../hooks/validation-error.type';
 import { vi, beforeEach, describe, test, expect } from 'vitest';
 
 // YamlCoreモックの設定
@@ -104,6 +105,7 @@ validated: true
               line: 2,
               message: 'Frontmatter validation error: Invalid schema_path',
               path: 'schema_path',
+              code: ErrorCode.FrontmatterValidation,
             },
           ]}
         />

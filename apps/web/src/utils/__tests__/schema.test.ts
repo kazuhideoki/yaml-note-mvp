@@ -1,6 +1,7 @@
 import { fetchSchema, isAbsolutePath } from '../schema';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { describe, test, expect, beforeAll, afterAll, afterEach } from 'vitest';
 
 // モックサーバーの設定
 const server = setupServer(

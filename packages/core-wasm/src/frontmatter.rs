@@ -6,6 +6,7 @@
 //! - スキーマパスとバリデーションフラグの管理
 
 use crate::error::{CoreError, ErrorInfo, ValidationResult};
+use crate::error_code::ErrorCode;
 use serde::{Deserialize, Serialize};
 
 /// フロントマターの構造体
@@ -104,7 +105,8 @@ pub fn validate_frontmatter(frontmatter: &Frontmatter) -> ValidationResult {
             errors.push(ErrorInfo::new(
                 0,
                 "schema_pathが空です".to_string(),
-                "schema_path".to_string()
+                "schema_path".to_string(),
+                ErrorCode::FrontmatterValidation,
             ));
         }
     }

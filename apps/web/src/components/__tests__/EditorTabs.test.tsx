@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EditorTabs } from '../EditorTabs';
-import { vi } from 'vitest';
+import { vi, describe, beforeEach, test, expect } from 'vitest';
 
 describe('EditorTabs', () => {
   const onTabChangeMock = vi.fn();
