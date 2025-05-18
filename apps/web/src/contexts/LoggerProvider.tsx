@@ -5,6 +5,7 @@ import {
   type LoggerContextType,
   type LogEvent,
   type LogLevel,
+  type LogAction,
 } from './LoggerContext';
 
 // プロバイダーコンポーネント
@@ -32,7 +33,14 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }));
 
   // ログイベントを記録する関数
-  const logEvent = (level: LogLevel, action: string, details?: Record<string, unknown>) => {
+  /**
+   * ログイベントを追加する
+   *
+   * @param {LogLevel} level - ログレベル
+   * @param {LogAction} action - アクション名
+   * @param {Record<string, unknown>} [details] - 付加情報
+   */
+  const logEvent = (level: LogLevel, action: LogAction, details?: Record<string, unknown>) => {
     const event: LogEvent = {
       timestamp: Date.now(),
       level,

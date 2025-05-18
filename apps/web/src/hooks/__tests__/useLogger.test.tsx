@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { LoggerProvider } from '../../contexts/LoggerProvider';
+import { LogEvent } from '../../contexts/LoggerContext';
 import { useLogger } from '../useLogger';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -114,11 +115,11 @@ describe('useLogger', () => {
     expect(setItemCalls[0][0]).toBe('yaml_note_logs');
 
     // 保存されたデータにdebugログやsession_startログが含まれていないこと
-    const savedData = JSON.parse(setItemCalls[0][1]);
-    const userSavedData = savedData.filter((log: any) => log.action !== 'session_start');
+    const savedData = JSON.parse(setItemCalls[0][1]) as LogEvent[];
+    const userSavedData = savedData.filter(log => log.action !== 'session_start');
     expect(userSavedData.length).toBe(1);
     expect(userSavedData[0].action).toBe('test_action');
-    expect(userSavedData.filter((log: any) => log.level === 'debug').length).toBe(0);
+    expect(userSavedData.filter(log => log.level === 'debug').length).toBe(0);
   });
 
   it('should export logs correctly', () => {
@@ -140,19 +141,19 @@ describe('useLogger', () => {
     });
 
     // エクスポート
-    let exportedLogs: any;
+    let exportedLogs: LogEvent[] = [];
     act(() => {
-      exportedLogs = JSON.parse(result.current.exportLogs());
+      exportedLogs = JSON.parse(result.current.exportLogs()) as LogEvent[];
     });
 
     // session_startログを除外して検証
-    const userExportedLogs = exportedLogs.filter((log: any) => log.action !== 'session_start');
+    const userExportedLogs = exportedLogs.filter(log => log.action !== 'session_start');
 
     // React 18環境では1つのログエントリしか表示されないことを確認（現状の実際の動作に合わせる）
     expect(userExportedLogs.length).toBeGreaterThan(0);
 
     // ログエントリにcurrentが含まれていること
-    const currentLogs = userExportedLogs.filter((log: any) => log.action === 'current');
+    const currentLogs = userExportedLogs.filter(log => log.action === 'current');
     expect(currentLogs.length).toBe(1);
   });
 });

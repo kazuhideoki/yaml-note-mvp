@@ -143,7 +143,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
 
   // エラー行クリック時にエディタの該当行にジャンプ
   const handleErrorClick = useCallback((line: number) => {
-    if (editorRef.current && line > 0) {
+    if (editorRef.current?.view && line > 0) {
       try {
         // CodeMirrorのAPIを使って指定行にジャンプ
         const lineInfo = editorRef.current.view.state.doc.line(line);

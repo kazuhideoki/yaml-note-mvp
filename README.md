@@ -6,17 +6,22 @@ A browser-based note-taking application that uses YAML as its primary format, fe
 
 - **Raw YAML Editing**: Edit notes in YAML format with syntax highlighting
 - **Real-time Validation**: Immediate feedback on YAML syntax and schema errors
+- **Validation Toggle**: Enable/disable schema validation with frontmatter settings
 - **Markdown Preview**: View rendered content in real-time
+- **Multi-tab Interface**: Switch between editor views with tabs
 - **UX Logging**: Comprehensive user interaction tracking for UX improvements
+- **Error Classification**: Visual distinction between different error types
 - **WebAssembly Core**: High-performance validation with Rust-powered WASM
 
 ## Project Architecture
 
 1. **Web App (React/TypeScript)**:
 
-   - UI with three panes: Raw YAML editor, error display, and Markdown preview
+   - UI with multiple views: Raw YAML editor, error display, and Markdown preview
+   - Editor tabs for switching between different edit modes
    - Built with React, Vite, and Tailwind CSS
    - Uses CodeMirror for YAML editing
+   - Comprehensive logging system with LoggerContext
 
 2. **Core WASM (Rust)**:
 
@@ -27,6 +32,12 @@ A browser-based note-taking application that uses YAML as its primary format, fe
 3. **Schema Definitions**:
    - JSON Schema files (in YAML format) that define note structure
    - Version-controlled to track schema evolution
+
+4. **Logging System**:
+   - Centralized logging through the LoggerContext provider
+   - Structured logging with LogAction union type
+   - Component-level logging via useLogger hook
+   - Analytics for user interactions and performance metrics
 
 ## Getting Started
 
@@ -79,6 +90,7 @@ The project has completed all planned phases:
 - ✅ Phase 3: Real-time validation
 - ✅ Phase 4: Markdown preview
 - ✅ Phase 5: UX logging foundation
+- ✅ Phase 6: Validation toggle and UX refinements
 
 ## Technology Stack
 
