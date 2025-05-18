@@ -3,14 +3,20 @@ import { ValidationError, ErrorCode } from './validation-error.type';
 import { useYamlCore } from './useYamlCore';
 import { fetchSchema } from '../utils/schema';
 import useLogger from './useLogger';
+import { Frontmatter } from '../types/frontmatter';
 
-// フロントマター抽出ユーティリティ
-const extractFrontmatter = (markdown: string) => {
+/**
+ * Markdown文字列からフロントマター部分を抽出する
+ *
+ * @param {string} markdown - 解析対象のMarkdown文字列
+ * @returns {Frontmatter | null} フロントマターオブジェクト（存在しない場合は null）
+ */
+const extractFrontmatter = (markdown: string): Frontmatter | null => {
   const match = markdown.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return null;
 
   const frontmatterLines = match[1].split('\n');
-  const frontmatter: Record<string, any> = {};
+  const frontmatter: Frontmatter = {};
 
   frontmatterLines.forEach(line => {
     const colonIndex = line.indexOf(':');
