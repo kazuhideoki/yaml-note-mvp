@@ -93,6 +93,7 @@ export interface LoggerContextType {
  * LoggerContext
  * ログ機能を提供するReact Context
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const LoggerContext = createContext<LoggerContextType | null>(null);
 
 // プロバイダーコンポーネント
