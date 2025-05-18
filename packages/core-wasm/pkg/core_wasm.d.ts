@@ -1,6 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+ * JSからのエラーメッセージをラップするためのコンバータ
+ */
+export function error_to_js_value(error: any): string;
+/**
  * YAMLを指定されたスキーマに対してバリデーションする
  *
  * # 引数
@@ -61,10 +65,6 @@ export function parse_and_validate_frontmatter(md_str: string): string;
  */
 export function md_headings_to_yaml(md_str: string): string;
 /**
- * JSからのエラーメッセージをラップするためのコンバータ
- */
-export function error_to_js_value(error: any): string;
-/**
  * バリデーションエラー種別を表すコード
  *
  * JS側でも利用できるよう `wasm_bindgen` で公開する
@@ -94,4 +94,36 @@ export enum ErrorCode {
    * 未分類のエラー
    */
   Unknown = 5,
+}
+/**
+ * フロントエンドに返すエラー情報
+ * バリデーションやパース時のエラー情報
+ *
+ * # フィールド
+ * - `line`: エラー発生行番号（0の場合は特定不可）
+ * - `message`: エラーメッセージ
+ * - `path`: エラー発生箇所のパス（YAML/JSON Pointer等）
+ * - `code`: エラー種別を表すコード
+ */
+export class ErrorInfo {
+  private constructor();
+  free(): void;
+  readonly line: number;
+  message: string;
+  path: string;
+  readonly code: ErrorCode;
+}
+/**
+ * フロントエンドに返す結果型
+ * バリデーションの結果を表す構造体
+ *
+ * # フィールド
+ * - `success`: バリデーション成功時はtrue
+ * - `errors`: エラー情報の配列（成功時は空配列）
+ */
+export class ValidationResult {
+  private constructor();
+  free(): void;
+  readonly success: boolean;
+  errors: ErrorInfo[];
 }
