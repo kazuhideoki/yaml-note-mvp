@@ -17,6 +17,7 @@ interface MarkdownEditorProps {
   onChange?: (content: string) => void;
   onSave: (content: string) => void;
   validationErrors?: ValidationError[];
+  validated?: boolean;
   fileName?: string;
 }
 
@@ -29,6 +30,7 @@ interface MarkdownEditorProps {
  * @param {function} props.onChange - 内容変更時のコールバック
  * @param {function} props.onSave - 保存時のコールバック
  * @param {ValidationError[]} [props.validationErrors] - バリデーションエラー一覧
+ * @param {boolean} [props.validated] - スキーマ検証が有効かどうか
  * @param {string} [props.fileName] - 現在開いているファイル名
  * @returns {JSX.Element}
  *
@@ -36,12 +38,14 @@ interface MarkdownEditorProps {
  * CodeMirrorベースのMarkdownエディタを提供し、ファイルのドラッグ＆ドロップ、
  * フロントマター検証機能を備える。エラー状態の適切な管理とリセットを行う。
  * File System Access APIを使ったファイル操作に対応。
+ * validated プロパティによりスキーマ検証の有効/無効を制御できる。
  */
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   initialContent = '',
   onChange,
   onSave,
   validationErrors = [],
+  validated = true,
   fileName = ''
 }) => {
   const [content, setContent] = useState<string>(initialContent);
@@ -212,7 +216,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             ref={editorRef}
             className="text-base"
           />
-          <ErrorBadge errors={validationErrors} onClick={handleErrorClick} />
+          <ErrorBadge errors={validationErrors} onClick={handleErrorClick} validated={validated} />
           {isValidating && (
             <div className="absolute bottom-4 left-4 bg-gray-800 text-white px-2 py-1 rounded-md text-xs opacity-70">
               検証中...

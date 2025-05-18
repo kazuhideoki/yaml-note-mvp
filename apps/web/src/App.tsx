@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import MarkdownEditor from './components/MarkdownEditor';
 import SchemaEditor from './components/SchemaEditor';
 import EditorTabs, { TabType } from './components/EditorTabs';
+import ValidationToggle from './components/ValidationToggle';
 import { LoggerProvider } from './contexts/LoggerContext';
 import useValidator from './hooks/useValidator';
 import { fetchSchema } from './utils/schema';
@@ -42,7 +43,7 @@ const App: React.FC = () => {
   } = useFileAccess();
 
   // バリデーション状態
-  const { errors, schemaPath: validatorSchemaPath } = useValidator(markdownContent);
+  const { errors, schemaPath: validatorSchemaPath, validated, toggleValidation } = useValidator(markdownContent);
 
   // スキーマロード関数
   const loadSchema = useCallback(
@@ -74,6 +75,15 @@ const App: React.FC = () => {
     setMarkdownContent(content);
     updateContent('markdown', content);
   }, [updateContent]);
+  
+  // バリデーション状態トグル処理
+  const handleValidationToggle = useCallback((newState: boolean) => {
+    const updatedMarkdown = toggleValidation(newState);
+    if (updatedMarkdown) {
+      setMarkdownContent(updatedMarkdown);
+      updateContent('markdown', updatedMarkdown);
+    }
+  }, [toggleValidation, updateContent]);
 
   // スキーマ変更ハンドラ
   const handleSchemaChange = useCallback((content: string) => {
@@ -102,7 +112,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-white">
         <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">YAML Note MVP</h1>
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 items-center">
             <button
               className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500"
               onClick={async () => {
@@ -142,6 +152,13 @@ const App: React.FC = () => {
             >
               名前を付けて保存
             </button>
+            
+            {/* バリデーショントグル */}
+            <ValidationToggle
+              isValidated={validated}
+              onToggle={handleValidationToggle}
+              isDisabled={!validatorSchemaPath || activeTab !== 'note'}
+            />
           </div>
         </header>
         <main className="container mx-auto p-4 h-[calc(100vh-8rem)]">
@@ -163,6 +180,7 @@ const App: React.FC = () => {
                   onChange={handleMarkdownChange}
                   onSave={saveMarkdown}
                   validationErrors={errors}
+                  validated={validated}
                   fileName={markdownFile.name}
                 />
               ) : (
