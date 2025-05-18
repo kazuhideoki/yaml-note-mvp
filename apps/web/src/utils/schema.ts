@@ -77,8 +77,7 @@ export const fetchSchema = async (schemaPath: string, basePath?: string): Promis
 
   try {
     // テストモードでは別のパス解決を使用します
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((import.meta as any).env?.MODE === 'test') {
+    if (import.meta.env?.MODE === 'test') {
       if (schemaPath.startsWith('./') && basePath) {
         const baseDir = basePath.substring(0, basePath.lastIndexOf('/') + 1);
         resolvedPath = baseDir + schemaPath.substring(2);
