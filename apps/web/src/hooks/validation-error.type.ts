@@ -9,4 +9,15 @@ export interface ValidationError {
   line: number;
   message: string;
   path: string;
+  code: ErrorCode;
+}
+
+/** バリデーションエラー種別 */
+export enum ErrorCode {
+  YamlParse = 'YamlParse',
+  SchemaCompile = 'SchemaCompile',
+  FrontmatterParse = 'FrontmatterParse',
+  FrontmatterValidation = 'FrontmatterValidation',
+  SchemaValidation = 'SchemaValidation',
+  Unknown = 'Unknown',
 }

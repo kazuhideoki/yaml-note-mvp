@@ -1,5 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
+export enum ErrorCode {
+  YamlParse = "YamlParse",
+  SchemaCompile = "SchemaCompile",
+  FrontmatterParse = "FrontmatterParse",
+  FrontmatterValidation = "FrontmatterValidation",
+  SchemaValidation = "SchemaValidation",
+  Unknown = "Unknown"
+}
 /**
  * YAMLを指定されたスキーマに対してバリデーションする
  *

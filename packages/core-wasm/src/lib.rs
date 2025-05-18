@@ -16,10 +16,13 @@
 use wasm_bindgen::prelude::*;
 
 mod error;
+mod error_code;
 mod frontmatter;
 mod md_transform;
 mod schema_compile;
 mod validate;
+
+pub use error_code::ErrorCode;
 
 pub use error::{CoreError, ErrorInfo, ValidationResult};
 
@@ -80,7 +83,7 @@ pub fn parse_and_validate_frontmatter(md_str: &str) -> String {
             let validation_result = frontmatter::validate_frontmatter(&frontmatter);
             validation_result.to_json()
         }
-        Err(e) => ValidationResult::single_error(ErrorInfo::new(0, e.to_string(), "")).to_json(),
+        Err(e) => ValidationResult::single_error(ErrorInfo::new(0, e.to_string(), "", ErrorCode::FrontmatterParse)).to_json(),
     }
 }
 

@@ -86,3 +86,17 @@ The project has completed all planned phases:
 - **Core Logic**: Rust (compiled to WASM), serde_yaml, jsonschema-valid
 - **Build Tools**: pnpm, wasm-pack, Vite
 - **Future Plans**: Migration to Tauri for native capabilities
+
+### Error Codes
+
+`ErrorCode` enum は WASM とフロントエンドで共有されるバリデーションエラー種別です。
+現在定義されているコードは以下の通りです。
+
+| Code | Meaning |
+| ---- | ------- |
+| `YamlParse` | YAML 解析エラー |
+| `SchemaCompile` | スキーマコンパイル時のエラー |
+| `FrontmatterParse` | フロントマター解析エラー |
+| `FrontmatterValidation` | フロントマター検証エラー |
+| `SchemaValidation` | スキーマ検証エラー |
+| `Unknown` | その他のエラー |

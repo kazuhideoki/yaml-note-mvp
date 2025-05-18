@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ValidationError } from './validation-error.type';
+import { ValidationError, ErrorCode } from './validation-error.type';
 import { useYamlCore } from './useYamlCore';
 import { fetchSchema } from '../utils/schema';
 import useLogger from './useLogger';
@@ -178,6 +178,7 @@ export const useValidator = (markdown: string) => {
                   ? `スキーマパスエラー: ${errorMessage}`
                   : `スキーマ検証エラー: ${errorMessage}`,
                 path: isAbsolutePathError ? 'schema_path' : '',
+                code: isAbsolutePathError ? ErrorCode.SchemaCompile : ErrorCode.SchemaValidation,
               });
 
               log('error', isAbsolutePathError ? 'schema_path_error' : 'schema_validation_error', {
@@ -208,6 +209,7 @@ export const useValidator = (markdown: string) => {
             line: 0,
             message: `検証エラー: ${error instanceof Error ? error.message : String(error)}`,
             path: '',
+            code: ErrorCode.Unknown,
           },
         ]);
 

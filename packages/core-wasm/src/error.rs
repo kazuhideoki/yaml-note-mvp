@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
+use crate::error_code::ErrorCode;
+
 /// コアモジュールのエラー型
 ///
 /// # 概要
@@ -38,25 +40,33 @@ pub enum CoreError {
 /// - `line`: エラー発生行番号（0の場合は特定不可）
 /// - `message`: エラーメッセージ
 /// - `path`: エラー発生箇所のパス（YAML/JSON Pointer等）
+/// - `code`: エラー種別を表すコード
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorInfo {
     pub line: u32,
     pub message: String,
     pub path: String,
+    pub code: ErrorCode,
 }
 
 impl ErrorInfo {
     /// 新しいErrorInfoを生成
-    pub fn new(line: u32, message: impl Into<String>, path: impl Into<String>) -> Self {
+    pub fn new(
+        line: u32,
+        message: impl Into<String>,
+        path: impl Into<String>,
+        code: ErrorCode,
+    ) -> Self {
         Self {
             line,
             message: message.into(),
             path: path.into(),
+            code,
         }
     }
 
     /// serde_yaml::ErrorからErrorInfoを生成
-    pub fn from_yaml_error(error: &serde_yaml::Error) -> Self {
+    pub fn from_yaml_error(error: &serde_yaml::Error, code: ErrorCode) -> Self {
         let line = match error.location() {
             Some(location) => location.line() as u32,
             None => 0,
@@ -65,6 +75,7 @@ impl ErrorInfo {
             line,
             message: error.to_string(),
             path: "".to_string(),
+            code,
         }
     }
 }

@@ -1,31 +1,34 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ErrorBadge from '../ErrorBadge';
-import { ValidationError } from '../../hooks/validation-error.type';
+import { ValidationError, ErrorCode } from '../../hooks/validation-error.type';
 import { LoggerProvider } from '../../contexts/LoggerContext';
 
 describe('ErrorBadge', () => {
   const mockErrors: ValidationError[] = [
-    { line: 1, message: 'Test error message 1', path: '/path1' },
-    { line: 5, message: 'Test error message 2', path: '/path2' },
+    { line: 1, message: 'Test error message 1', path: '/path1', code: ErrorCode.Unknown },
+    { line: 5, message: 'Test error message 2', path: '/path2', code: ErrorCode.Unknown },
   ];
 
   const frontmatterError: ValidationError = {
     line: 1,
     message: 'フロントマターエラー: 必須フィールドがありません',
     path: 'schema_path',
+    code: ErrorCode.FrontmatterValidation,
   };
 
   const schemaValidationError: ValidationError = {
     line: 5,
     message: 'スキーマ検証エラー: フィールドが必要です',
     path: 'title',
+    code: ErrorCode.SchemaValidation,
   };
 
   const schemaStructureError: ValidationError = {
     line: 2,
     message: 'スキーマ構文エラー: 無効なスキーマです',
     path: '',
+    code: ErrorCode.SchemaCompile,
   };
 
   it('renders errors correctly', () => {

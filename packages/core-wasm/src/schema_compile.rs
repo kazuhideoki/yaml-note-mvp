@@ -6,6 +6,7 @@
 
 use serde_json::Value;
 use crate::error::{ErrorInfo, ValidationResult};
+use crate::error_code::ErrorCode;
 
 /// JSONスキーマをコンパイルして検証する
 ///
@@ -29,12 +30,12 @@ pub fn compile_schema(schema_yaml: &str) -> String {
         Ok(value) => {
             // スキーマの基本検証
             if let Err(error) = validate_schema_basics(&value) {
-                return ValidationResult::error(vec![ErrorInfo::new(0, error, "")]).to_json();
+                return ValidationResult::error(vec![ErrorInfo::new(0, error, "", ErrorCode::SchemaCompile)]).to_json();
             }
 
             // メタスキーマによる検証
             if let Err(error) = validate_schema_structure(&value) {
-                return ValidationResult::error(vec![ErrorInfo::new(0, error, "")]).to_json();
+                return ValidationResult::error(vec![ErrorInfo::new(0, error, "", ErrorCode::SchemaCompile)]).to_json();
             }
 
             // 成功
@@ -51,7 +52,8 @@ pub fn compile_schema(schema_yaml: &str) -> String {
                 ErrorInfo::new(
                     line,
                     format!("スキーマ構文エラー: YAML解析に失敗しました - {}", err),
-                    ""
+                    "",
+                    ErrorCode::YamlParse,
                 )
             ]).to_json()
         }
