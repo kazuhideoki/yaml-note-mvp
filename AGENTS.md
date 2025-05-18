@@ -6,7 +6,13 @@ This file provides guidance to Codex when working with code in this repository.
 
 YAML Note MVP is a browser-based note-taking application that uses YAML as its primary format. The application features a React-based web interface with real-time validation of YAML notes against JSON Schema definitions, and provides both raw YAML editing and Markdown preview capabilities.
 
+
 The project uses a monorepo structure with Rust (compiled to WebAssembly) for core YAML validation functions, and React/TypeScript for the web interface. The application is designed to provide immediate error feedback while editing YAML notes.
+
+## エージェントのコミュニケーション
+
+- ユーザーが日本語で質問した場合、エージェントも日本語で回答する。
+- 言語の指定がない場合は英語を用いてよいが、ユーザーから指示があればそれに従うこと。
 
 ## Key Architecture Components
 
