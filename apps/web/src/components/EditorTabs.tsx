@@ -13,22 +13,22 @@ import React, { useCallback } from 'react';
 export type TabType = 'note' | 'schema';
 
 /**
- * EditorTabsのprops型
- * @property {string | null} currentSchemaPath - 現在のスキーマパス（nullの場合はスキーマ未設定）
- * @property {TabType} activeTab - 現在アクティブなタブ
- * @property {(tab: TabType) => void} onTabChange - タブ切替時のハンドラ
- * @property {boolean} markdownDirty - マークダウンファイルの変更状態
- * @property {boolean} schemaDirty - スキーマファイルの変更状態
- * @property {string} markdownFileName - マークダウンファイルの名前
- * @property {string} schemaFileName - スキーマファイルの名前
+ * EditorTabs コンポーネントのプロパティ型
  */
 export interface EditorTabsProps {
+  /** 現在のスキーマパス（null の場合は未設定） */
   currentSchemaPath: string | null;
+  /** 現在アクティブなタブ */
   activeTab: TabType;
+  /** タブ切替時のハンドラ */
   onTabChange: (tab: TabType) => void;
+  /** マークダウンファイルの変更状態 */
   markdownDirty?: boolean;
+  /** スキーマファイルの変更状態 */
   schemaDirty?: boolean;
+  /** マークダウンファイルの名前 */
   markdownFileName?: string;
+  /** スキーマファイルの名前 */
   schemaFileName?: string;
 }
 
@@ -37,13 +37,6 @@ export interface EditorTabsProps {
  * 
  * @component
  * @param {EditorTabsProps} props - コンポーネントのプロパティ
- * @param {string | null} props.currentSchemaPath - 現在のスキーマパス（nullの場合はスキーマ未設定）
- * @param {TabType} props.activeTab - 現在アクティブなタブ
- * @param {function} props.onTabChange - タブ変更時のコールバック関数
- * @param {boolean} [props.markdownDirty] - マークダウンファイルの変更状態
- * @param {boolean} [props.schemaDirty] - スキーマファイルの変更状態
- * @param {string} [props.markdownFileName] - マークダウンファイルの名前
- * @param {string} [props.schemaFileName] - スキーマファイルの名前
  * @returns {JSX.Element} タブUIコンポーネント
  */
 export const EditorTabs: React.FC<EditorTabsProps> = ({

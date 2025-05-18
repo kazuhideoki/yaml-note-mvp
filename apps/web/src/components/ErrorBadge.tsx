@@ -11,11 +11,19 @@ type ErrorType =
   | 'other';
 import useLogger from '../hooks/useLogger';
 
+/**
+ * ErrorBadge コンポーネントのプロパティ型
+ */
 interface ErrorBadgeProps {
+  /** 表示するバリデーションエラー配列 */
   errors: ValidationError[];
+  /** エラー行クリック時のコールバック */
   onClick?: (line: number) => void;
+  /** 追加の CSS クラス */
   className?: string;
+  /** バッジタイプ */
   type?: 'frontmatter' | 'schema' | 'schemaValidation';
+  /** スキーマ検証エラーを表示するか */
   validated?: boolean;
 }
 
@@ -24,10 +32,6 @@ interface ErrorBadgeProps {
  *
  * @component
  * @param {ErrorBadgeProps} props - エラー情報とクリックハンドラ等
- * @param {ValidationError[]} props.errors - 表示するバリデーションエラー配列
- * @param {(line: number) => void} [props.onClick] - エラー行クリック時のコールバック
- * @param {string} [props.className] - 追加のCSSクラス
- * @param {boolean} [props.validated] - スキーマ検証が有効かどうか。falseの場合スキーマ検証エラーは表示されない
  * @returns {JSX.Element | null}
  *
  * @description

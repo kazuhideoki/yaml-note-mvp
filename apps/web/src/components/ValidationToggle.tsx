@@ -7,9 +7,15 @@
 import React, { useCallback } from 'react';
 import useLogger from '../hooks/useLogger';
 
+/**
+ * ValidationToggle コンポーネントのプロパティ型
+ */
 export interface ValidationToggleProps {
+  /** 検証が有効かどうか */
   isValidated: boolean;
+  /** トグル時に呼ばれるハンドラ */
   onToggle: (isValidated: boolean) => void;
+  /** 操作不可状態か */
   isDisabled?: boolean;
 }
 

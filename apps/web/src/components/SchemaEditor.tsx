@@ -12,12 +12,21 @@ import { ValidationError } from '../hooks/validation-error.type';
 import ErrorBadge from './ErrorBadge';
 import useLogger from '../hooks/useLogger';
 
+/**
+ * SchemaEditor コンポーネントのプロパティ型
+ */
 interface SchemaEditorProps {
+  /** スキーマファイルのパス */
   schemaPath: string;
+  /** 初期スキーマ内容 */
   initialSchema: string;
+  /** 保存時のコールバック */
   onSave: (content: string) => void;
+  /** エディタがアクティブかどうか */
   active: boolean;
+  /** 内容変更時のコールバック */
   onChange?: (content: string) => void;
+  /** 表示用ファイル名（File System Access API用） */
   fileName?: string;
 }
 
@@ -26,12 +35,6 @@ interface SchemaEditorProps {
  *
  * @component
  * @param {SchemaEditorProps} props - コンポーネントのプロパティ
- * @param {string} props.schemaPath - スキーマファイルのパス
- * @param {string} props.initialSchema - 初期スキーマ内容
- * @param {(content: string) => void} props.onSave - 保存時のコールバック関数
- * @param {boolean} props.active - アクティブかどうか
- * @param {(content: string) => void} [props.onChange] - 内容変更時のコールバック
- * @param {string} [props.fileName] - ファイル名（File System Access API用）
  * @returns {JSX.Element | null} スキーマエディタコンポーネント
  */
 export const SchemaEditor: React.FC<SchemaEditorProps> = ({
