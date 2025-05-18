@@ -124,7 +124,7 @@ Markdown を**唯一の編集・保存フォーマット**とし、最小限の�
 - **設計概要**: `ValidationToggle.tsx`、ErrorBadge デザイン仕上げ、Logger 新イベント。
 - **対象ファイル (例)**: `src/components/ValidationToggle.tsx`, `src/hooks/useLogger.ts`.
 - **完了条件**: トグル OFF→黄色非表示、ON→復活。
-- **自動テストで保証する挙動**: Jest: toggle→`validated` 更新、validator skip/restore。
+- **自動テストで保証する挙動**: Jest: toggle→`validated` 更新、validator skip/restore。フロントマターの `validated` フィールドに反映
 - **Key Tasks (例)**: 1) Toggle UI 実装。2) `useValidator` に validated 分岐。3) PostHog event 発火。
 - **手動チェック**: PostHog toggle イベント確認。
 - **やらないこと**: PostHog 本番設定。
