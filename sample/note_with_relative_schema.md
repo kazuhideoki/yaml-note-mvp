@@ -11,9 +11,11 @@ This is a sample note that references a schema using a relative path.
 
 ## Features
 
-Supports relative schema paths
+Supports relative schema paths!
 
-## Piyo
+## Fuga
+
+hoge`~~~~
 
 ### Hoge
 

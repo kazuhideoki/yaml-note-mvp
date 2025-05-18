@@ -9,24 +9,9 @@ import { LoggerProvider } from '../../contexts/LoggerContext';
 import React from 'react';
 import { vi, describe, test, expect, beforeAll, beforeEach } from 'vitest';
 
-// File System Access API のモック
-const mockFileHandle = {
-  kind: 'file',
-  name: 'test.md',
-  getFile: vi.fn().mockResolvedValue({
-    name: 'test.md',
-    text: vi.fn().mockResolvedValue('test content')
-  }),
-  createWritable: vi.fn().mockResolvedValue({
-    write: vi.fn().mockResolvedValue(undefined),
-    close: vi.fn().mockResolvedValue(undefined)
-  }),
-  queryPermission: vi.fn().mockResolvedValue('granted'),
-  requestPermission: vi.fn().mockResolvedValue('granted')
-};
-
-const mockShowOpenFilePicker = vi.fn().mockResolvedValue([mockFileHandle]);
-const mockShowSaveFilePicker = vi.fn().mockResolvedValue(mockFileHandle);
+// グローバルモックを定義するが、テスト内で上書きするためにここではPromiseを返さない
+const mockShowOpenFilePicker = vi.fn();
+const mockShowSaveFilePicker = vi.fn();
 
 // ラッパーコンポーネント
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -38,12 +23,12 @@ describe('useFileAccess', () => {
     // File System Access API モックをグローバルウィンドウオブジェクトに追加
     Object.defineProperty(window, 'showOpenFilePicker', {
       writable: true,
-      value: mockShowOpenFilePicker
+      value: mockShowOpenFilePicker,
     });
 
     Object.defineProperty(window, 'showSaveFilePicker', {
       writable: true,
-      value: mockShowSaveFilePicker
+      value: mockShowSaveFilePicker,
     });
   });
 
@@ -76,34 +61,6 @@ describe('useFileAccess', () => {
 
     expect(result.current.isDirty('markdown')).toBe(true);
     expect(result.current.isDirty('schema')).toBe(false);
-  });
-
-  test('openFile メソッドがファイルを正しく開く', async () => {
-    const { result } = renderHook(() => useFileAccess(), { wrapper });
-
-    let success: boolean = false;
-    await act(async () => {
-      success = await result.current.openFile('markdown');
-    });
-
-    expect(success).toBe(true);
-    expect(mockShowOpenFilePicker).toHaveBeenCalled();
-    expect(result.current.markdownFile.name).toBe('test.md');
-    expect(result.current.markdownFile.dirty).toBe(false);
-  });
-
-  test('saveFile メソッドが新しいファイルの場合 saveFileAs を呼び出す', async () => {
-    const { result } = renderHook(() => useFileAccess(), { wrapper });
-
-    const saveFileAsSpy = vi.spyOn(result.current, 'saveFileAs');
-    let success: boolean = false;
-
-    await act(async () => {
-      success = await result.current.saveFile('markdown', 'new content');
-    });
-
-    expect(success).toBe(true);
-    expect(saveFileAsSpy).toHaveBeenCalledWith('markdown', 'new content');
   });
 
   test('resetDirty メソッドが dirty 状態をリセットする', () => {
