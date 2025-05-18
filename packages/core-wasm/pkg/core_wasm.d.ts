@@ -95,3 +95,25 @@ export enum ErrorCode {
    */
   Unknown = 5,
 }
+
+/**
+ * フロントエンドに返すエラー情報
+ * バリデーションやパース時のエラー内容を保持するクラス
+ */
+export class ErrorInfo {
+  free(): void;
+  readonly line: number;
+  get message(): string;
+  get path(): string;
+  readonly code: ErrorCode;
+}
+
+/**
+ * フロントエンドに返す結果型
+ * バリデーション処理の成否とエラー一覧を提供するクラス
+ */
+export class ValidationResult {
+  free(): void;
+  readonly success: boolean;
+  get errors(): ErrorInfo[];
+}

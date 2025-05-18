@@ -41,11 +41,16 @@ pub enum CoreError {
 /// - `message`: エラーメッセージ
 /// - `path`: エラー発生箇所のパス（YAML/JSON Pointer等）
 /// - `code`: エラー種別を表すコード
-#[derive(Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorInfo {
+    #[wasm_bindgen(readonly)]
     pub line: u32,
+    #[wasm_bindgen(getter_with_clone)]
     pub message: String,
+    #[wasm_bindgen(getter_with_clone)]
     pub path: String,
+    #[wasm_bindgen(readonly)]
     pub code: ErrorCode,
 }
 
@@ -86,9 +91,12 @@ impl ErrorInfo {
 /// # フィールド
 /// - `success`: バリデーション成功時はtrue
 /// - `errors`: エラー情報の配列（成功時は空配列）
-#[derive(Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
+    #[wasm_bindgen(readonly)]
     pub success: bool,
+    #[wasm_bindgen(getter_with_clone)]
     pub errors: Vec<ErrorInfo>,
 }
 
