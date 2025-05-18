@@ -31,19 +31,19 @@ export interface LogEvent {
 
 // ロガーコンテキストの型定義
 /**
- * LoggerContextで提供される関数・状態の型
- * @property {(level, action, details?) => void} log - ログ記録関数
- * @property {LogEvent[]} events - 現在のログイベント配列
- * @property {() => void} clearEvents - ログのクリア
- * @property {string} sessionId - セッションID
- * @property {() => string} exportLogs - ログのエクスポート（JSON文字列）
+ * LoggerContext で提供される関数・状態の型
  */
 export interface LoggerContextType {
+  /** ログ記録関数 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (level: LogLevel, action: string, details?: Record<string, any>) => void;
+  /** 現在のログイベント配列 */
   events: LogEvent[];
+  /** ログのクリア */
   clearEvents: () => void;
+  /** セッションID */
   sessionId: string;
+  /** ログを JSON 文字列でエクスポート */
   exportLogs: () => string;
 }
 

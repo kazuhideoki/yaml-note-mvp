@@ -12,12 +12,21 @@ import ErrorBadge from './ErrorBadge';
 import useLogger from '../hooks/useLogger';
 import { ValidationError } from '../hooks/validation-error.type';
 
+/**
+ * MarkdownEditor コンポーネントのプロパティ型
+ */
 interface MarkdownEditorProps {
+  /** 初期コンテンツ */
   initialContent: string;
+  /** 内容変更時のコールバック */
   onChange?: (content: string) => void;
+  /** 保存時のコールバック */
   onSave: (content: string) => void;
+  /** バリデーションエラー一覧 */
   validationErrors?: ValidationError[];
+  /** スキーマ検証が有効かどうか */
   validated?: boolean;
+  /** 現在開いているファイル名 */
   fileName?: string;
 }
 
@@ -26,12 +35,6 @@ interface MarkdownEditorProps {
  *
  * @component
  * @param {MarkdownEditorProps} props - コンポーネントのプロパティ
- * @param {string} props.initialContent - 初期コンテンツ
- * @param {function} props.onChange - 内容変更時のコールバック
- * @param {function} props.onSave - 保存時のコールバック
- * @param {ValidationError[]} [props.validationErrors] - バリデーションエラー一覧
- * @param {boolean} [props.validated] - スキーマ検証が有効かどうか
- * @param {string} [props.fileName] - 現在開いているファイル名
  * @returns {JSX.Element}
  *
  * @description
