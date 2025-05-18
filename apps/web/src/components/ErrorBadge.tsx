@@ -16,6 +16,7 @@ interface ErrorBadgeProps {
   onClick?: (line: number) => void;
   className?: string;
   type?: 'frontmatter' | 'schema' | 'schemaValidation';
+  validated?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ interface ErrorBadgeProps {
  * @param {ValidationError[]} props.errors - 表示するバリデーションエラー配列
  * @param {(line: number) => void} [props.onClick] - エラー行クリック時のコールバック
  * @param {string} [props.className] - 追加のCSSクラス
+ * @param {boolean} [props.validated] - スキーマ検証が有効かどうか。falseの場合スキーマ検証エラーは表示されない
  * @returns {JSX.Element | null}
  *
  * @description
@@ -33,12 +35,14 @@ interface ErrorBadgeProps {
  * エラー表示時にはUXログも記録する。
  * エラータイプに応じて色分け表示（赤：フロントマターエラー、黄：スキーマ違反、紫：スキーマ構文エラー）
  * エラーが解消された場合、適切にコンポーネントを非表示にする
+ * validateフラグがfalseの場合、スキーマ検証エラー（黄色バッジ）は表示されない
  */
 export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   errors,
   onClick,
   className = '',
   type,
+  validated = true,
 }) => {
   const { log } = useLogger();
   const [visible, setVisible] = useState(false);
@@ -46,12 +50,23 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
 
   // エラーの変更を検出して表示状態を更新
   useEffect(() => {
+    // フィルタ済みのエラーを計算
+    // validated=falseの場合、スキーマ検証エラーを除外する
+    const filteredErrors = validated 
+      ? errors 
+      : errors.filter(err => 
+          !(err.message.includes('スキーマ検証') || 
+            err.message.includes('Schema validation') ||
+            err.message.includes('required') ||
+            err.message.includes('type') ||
+            err.message.includes('pattern')));
+
     // 新しいエラーがある場合は表示
-    if (errors.length > 0) {
+    if (filteredErrors.length > 0) {
       setVisible(true);
 
       // エラータイプを集計
-      const errorTypes = errors.reduce((acc: Record<ErrorType, number>, err) => {
+      const errorTypes = filteredErrors.reduce((acc: Record<ErrorType, number>, err) => {
         let type: ErrorType;
         switch (true) {
           case err.message.includes('フロントマター') || err.message.includes('Frontmatter'):
@@ -84,15 +99,16 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
       });
 
       // 前回と異なるエラーセットの場合のみログを記録
-      if (JSON.stringify(errors) !== JSON.stringify(prevErrorsRef.current)) {
+      if (JSON.stringify(filteredErrors) !== JSON.stringify(prevErrorsRef.current)) {
         log('warn', 'error_badge_displayed', {
-          errorCount: errors.length,
+          errorCount: filteredErrors.length,
           errorTypes,
-          firstErrorLine: errors[0]?.line,
+          firstErrorLine: filteredErrors[0]?.line,
+          validated,
         });
 
         // 現在のエラーを保存
-        prevErrorsRef.current = [...errors];
+        prevErrorsRef.current = [...filteredErrors];
       }
     } else {
       // エラーがなくなった場合は非表示
@@ -102,16 +118,27 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
       if (prevErrorsRef.current.length > 0) {
         log('info', 'errors_resolved', {
           previousErrorCount: prevErrorsRef.current.length,
+          validated,
         });
 
         // エラー参照をクリア
         prevErrorsRef.current = [];
       }
     }
-  }, [errors, log]);
+  }, [errors, log, validated]);
 
+  // フィルタ済みのエラーを計算（表示判定時にも必要）
+  const filteredErrors = validated 
+    ? errors 
+    : errors.filter(err => 
+        !(err.message.includes('スキーマ検証') || 
+          err.message.includes('Schema validation') ||
+          err.message.includes('required') ||
+          err.message.includes('type') ||
+          err.message.includes('pattern')));
+  
   // 表示されない場合は早期リターン
-  if (!visible || errors.length === 0) {
+  if (!visible || filteredErrors.length === 0) {
     return null;
   }
 
@@ -329,17 +356,29 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   /**
    * エラー項目をレンダリング
    */
-  const renderError = (error: ValidationError, index: number) => (
-    <li
-      key={`error-${index}-${error.line}`}
-      className={`mb-1 cursor-pointer hover:bg-opacity-70 p-1 rounded ${getErrorTypeClass(error)}`}
-      onClick={() => handleClick(error.line, error.message)}
-    >
-      {error.line > 0 && <span className="font-mono font-bold">行 {error.line}: </span>}
-      {error.message}
-      {error.path && <span className="text-xs block ml-4">パス: {error.path}</span>}
-    </li>
-  );
+  const renderError = (error: ValidationError, index: number) => {
+    // validated=falseの場合はスキーマ検証エラーを表示しない
+    if (!validated && 
+        (error.message.includes('スキーマ検証') || 
+         error.message.includes('Schema validation') ||
+         error.message.includes('required') ||
+         error.message.includes('type') ||
+         error.message.includes('pattern'))) {
+      return null;
+    }
+    
+    return (
+      <li
+        key={`error-${index}-${error.line}`}
+        className={`mb-1 cursor-pointer hover:bg-opacity-70 p-1 rounded ${getErrorTypeClass(error)}`}
+        onClick={() => handleClick(error.line, error.message)}
+      >
+        {error.line > 0 && <span className="font-mono font-bold">行 {error.line}: </span>}
+        {error.message}
+        {error.path && <span className="text-xs block ml-4">パス: {error.path}</span>}
+      </li>
+    );
+  };
 
   /**
    * エラータイプごとのメッセージグループを作成
@@ -361,6 +400,10 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
         </div>
       );
     } else if (type === 'schemaValidation') {
+      // 検証が無効な場合はスキーマ検証エラーを表示しない
+      if (!validated) {
+        return null;
+      }
       return (
         <div>
           <div className="font-bold text-yellow-700 mb-1">スキーマ検証エラー:</div>
@@ -412,7 +455,8 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
           </div>
         )}
 
-        {schemaValidationErrors.length > 0 && (
+        {/* スキーマ検証エラーは validated が true の場合のみ表示 */}
+        {validated && schemaValidationErrors.length > 0 && (
           <div className="mb-2">
             <div className="font-bold text-yellow-700 mb-1">スキーマ検証エラー:</div>
             {schemaValidationErrors.map((error, index) => renderError(error, index))}

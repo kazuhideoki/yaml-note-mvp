@@ -40,12 +40,14 @@ const extractFrontmatter = (markdown: string) => {
  *   isValidating: boolean,
  *   schemaPath: string | null,
  *   validated: boolean,
+ *   toggleValidation: (newState?: boolean) => string | null,
  *   clearErrors: () => void
  * }}
  *
  * @description
  * Markdownテキストを受け取り、フロントマター検証とスキーマ検証を実行する。
  * 30msのデバウンス処理を行い、エラー結果を返却する。
+ * toggleValidation関数により検証の有効/無効を切り替えることができる。
  */
 export const useValidator = (markdown: string) => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
@@ -56,6 +58,56 @@ export const useValidator = (markdown: string) => {
   const { wasmLoaded, validateFrontmatter, markdownToYaml, validateYamlWithSchema } = useYamlCore();
 
   const { log } = useLogger();
+
+  // 検証トグル関数
+  const toggleValidation = useCallback(
+    (newState?: boolean) => {
+      if (!markdown) return null;
+
+      try {
+        // フロントマターを解析
+        const frontmatter = extractFrontmatter(markdown);
+        if (!frontmatter) return null;
+
+        // validated フィールドの現在値を取得
+        const currentValidated = frontmatter.validated !== false;
+
+        // 新しい状態を決定（引数があればその値、なければトグル）
+        const nextValidated = newState !== undefined ? newState : !currentValidated;
+
+        // フロントマター内の validated 値を更新
+        const updatedFrontmatter = { ...frontmatter, validated: nextValidated };
+
+        // マークダウン文字列のフロントマター部分を置換
+        const frontmatterBlock = Object.entries(updatedFrontmatter)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('\n');
+
+        const updatedMarkdown = markdown.replace(
+          /^---\n[\s\S]*?\n---/,
+          `---\n${frontmatterBlock}\n---`
+        );
+
+        // 内部状態を更新
+        setValidated(nextValidated);
+
+        // ログ記録
+        log('info', 'validation_state_changed', {
+          previous: currentValidated,
+          current: nextValidated,
+        });
+
+        return updatedMarkdown;
+      } catch (error) {
+        console.error('Failed to toggle validation state:', error);
+        log('error', 'validation_toggle_failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+    },
+    [markdown, log]
+  );
 
   // エラーを手動でクリアする関数
   const clearErrors = useCallback(() => {
@@ -172,7 +224,7 @@ export const useValidator = (markdown: string) => {
     return () => clearTimeout(timerId);
   }, [markdown, wasmLoaded, validateFrontmatter, markdownToYaml, validateYamlWithSchema, log]);
 
-  return { errors, isValidating, schemaPath, validated, clearErrors };
+  return { errors, isValidating, schemaPath, validated, toggleValidation, clearErrors };
 };
 
 export default useValidator;
