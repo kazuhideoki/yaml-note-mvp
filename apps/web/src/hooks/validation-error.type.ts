@@ -21,3 +21,31 @@ export enum ErrorCode {
   SchemaValidation = 'SchemaValidation',
   Unknown = 'Unknown',
 }
+
+/**
+ * Rust/WASMのエラーコードをTypeScriptの文字列エラーコードに変換
+ * 
+ * @param code - Rust側から返されるエラーコード（型は不明）
+ * @returns 対応するErrorCode列挙型の値
+ */
+export function mapNumericToStringErrorCode(code: unknown): ErrorCode {
+  if (typeof code !== 'number') {
+    return ErrorCode.Unknown;
+  }
+  
+  switch (code) {
+    case 0:
+      return ErrorCode.YamlParse;
+    case 1:
+      return ErrorCode.SchemaCompile;
+    case 2:
+      return ErrorCode.FrontmatterParse;
+    case 3:
+      return ErrorCode.FrontmatterValidation;
+    case 4:
+      return ErrorCode.SchemaValidation;
+    case 5:
+    default:
+      return ErrorCode.Unknown;
+  }
+}

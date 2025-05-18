@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ValidationError, ErrorCode } from './validation-error.type';
+import { ValidationError, mapNumericToStringErrorCode } from './validation-error.type';
 
 /**
  * WASMコアモジュールの型定義
@@ -98,7 +98,7 @@ export function useYamlCore() {
             line: err.line || 0,
             message: err.message,
             path: err.path || '',
-            code: err.code || ErrorCode.Unknown,
+            code: mapNumericToStringErrorCode(err.code),
           }));
         }
 
@@ -163,7 +163,7 @@ export function useYamlCore() {
             line: err.line || 0,
             message: `スキーマ検証エラー: ${err.message}`,
             path: err.path || '',
-            code: err.code || ErrorCode.Unknown,
+            code: mapNumericToStringErrorCode(err.code),
           }));
         }
 
@@ -226,7 +226,7 @@ export function useYamlCore() {
               ? err.message
               : `スキーマ構文エラー: ${err.message}`,
             path: err.path || '',
-            code: err.code || ErrorCode.Unknown,
+            code: mapNumericToStringErrorCode(err.code),
           }));
         }
 

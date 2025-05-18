@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-use serde::{Serialize, Deserialize};
 
 /// バリデーションエラー種別を表すコード
 ///

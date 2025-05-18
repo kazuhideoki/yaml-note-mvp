@@ -1,13 +1,5 @@
 /* tslint:disable */
 /* eslint-disable */
-export enum ErrorCode {
-  YamlParse = "YamlParse",
-  SchemaCompile = "SchemaCompile",
-  FrontmatterParse = "FrontmatterParse",
-  FrontmatterValidation = "FrontmatterValidation",
-  SchemaValidation = "SchemaValidation",
-  Unknown = "Unknown"
-}
 /**
  * YAMLを指定されたスキーマに対してバリデーションする
  *
@@ -72,3 +64,34 @@ export function md_headings_to_yaml(md_str: string): string;
  * JSからのエラーメッセージをラップするためのコンバータ
  */
 export function error_to_js_value(error: any): string;
+/**
+ * バリデーションエラー種別を表すコード
+ *
+ * JS側でも利用できるよう `wasm_bindgen` で公開する
+ */
+export enum ErrorCode {
+  /**
+   * YAMLパースエラー
+   */
+  YamlParse = 0,
+  /**
+   * スキーマコンパイルエラー
+   */
+  SchemaCompile = 1,
+  /**
+   * フロントマターパースエラー
+   */
+  FrontmatterParse = 2,
+  /**
+   * フロントマター検証エラー
+   */
+  FrontmatterValidation = 3,
+  /**
+   * スキーマ検証エラー
+   */
+  SchemaValidation = 4,
+  /**
+   * 未分類のエラー
+   */
+  Unknown = 5,
+}
