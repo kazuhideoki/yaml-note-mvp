@@ -23,6 +23,28 @@ export enum ErrorCode {
 }
 
 /**
+ * WASMから返されるエラー情報
+ *
+ * Rust側のErrorInfo構造体に対応する型定義
+ */
+export interface WasmErrorInfo {
+  line?: number;
+  message: string;
+  path?: string;
+  code: number;
+}
+
+/**
+ * WASMから返されるバリデーション結果
+ *
+ * successがtrueの場合はerrorsは空配列となる
+ */
+export interface ValidationResult {
+  success: boolean;
+  errors: WasmErrorInfo[];
+}
+
+/**
  * Rust/WASMのエラーコードをTypeScriptの文字列エラーコードに変換
  * 
  * @param code - Rust側から返されるエラーコード（型は不明）

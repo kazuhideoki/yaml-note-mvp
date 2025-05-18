@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ValidationError, mapNumericToStringErrorCode } from './validation-error.type';
+import {
+  ValidationError,
+  ValidationResult,
+  WasmErrorInfo,
+  mapNumericToStringErrorCode,
+} from './validation-error.type';
 
 /**
  * WASMコアモジュールの型定義
@@ -90,14 +95,14 @@ export function useYamlCore() {
       try {
         // WASMコア関数呼び出し
         const resultJson = instance.parse_and_validate_frontmatter(markdown);
-        const result = JSON.parse(resultJson);
+        const result = JSON.parse(resultJson) as ValidationResult;
 
         // 結果をValidationError[]形式に変換
         if (!result.success) {
-          return result.errors.map((err: any) => ({
-            line: err.line || 0,
+          return result.errors.map((err: WasmErrorInfo) => ({
+            line: err.line ?? 0,
             message: err.message,
-            path: err.path || '',
+            path: err.path ?? '',
             code: mapNumericToStringErrorCode(err.code),
           }));
         }
@@ -156,13 +161,13 @@ export function useYamlCore() {
 
       try {
         const resultJson = instance.validate_yaml(yaml, schema);
-        const result = JSON.parse(resultJson);
+        const result = JSON.parse(resultJson) as ValidationResult;
 
         if (!result.success) {
-          return result.errors.map((err: any) => ({
-            line: err.line || 0,
+          return result.errors.map((err: WasmErrorInfo) => ({
+            line: err.line ?? 0,
             message: `スキーマ検証エラー: ${err.message}`,
-            path: err.path || '',
+            path: err.path ?? '',
             code: mapNumericToStringErrorCode(err.code),
           }));
         }
@@ -217,15 +222,15 @@ export function useYamlCore() {
 
       try {
         const resultJson = instance.compile_schema(schemaYaml);
-        const result = JSON.parse(resultJson);
+        const result = JSON.parse(resultJson) as ValidationResult;
 
         if (!result.success) {
-          return result.errors.map((err: any) => ({
-            line: err.line || 0,
+          return result.errors.map((err: WasmErrorInfo) => ({
+            line: err.line ?? 0,
             message: err.message.startsWith('スキーマ構文エラー:')
               ? err.message
               : `スキーマ構文エラー: ${err.message}`,
-            path: err.path || '',
+            path: err.path ?? '',
             code: mapNumericToStringErrorCode(err.code),
           }));
         }
