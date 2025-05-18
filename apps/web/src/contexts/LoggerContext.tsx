@@ -16,7 +16,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  *
  * アプリ内で発生し得るすべてのアクションを列挙する。
  */
-export type LogAction =
+export type LogActionType =
   | 'session_start'
   | 'session_end'
   | 'error_badge_displayed'
@@ -53,6 +53,9 @@ export type LogAction =
   | 'test2'
   | 'debug_action'
   | 'current';
+
+// 後方互換性のためにLogActionを残しておく
+export type LogAction = LogActionType;
 
 // ログイベント構造の定義
 /**

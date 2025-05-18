@@ -103,6 +103,8 @@ pnpm build
 
 ### Testing and Validation
 
+**After completing each task, make sure to run the appropriate command(s) listed below.**
+
 ```bash
 # Run all tests
 pnpm test
@@ -138,6 +140,7 @@ cargo clippy -- -D warnings
    - The development server will automatically reload on changes
 
 3. **Schema Changes**:
+
    - Edit schema files in `apps/web/public/schemas/`
 
 4. **Logging System Usage**:

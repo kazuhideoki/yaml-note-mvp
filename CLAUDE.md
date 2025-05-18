@@ -83,6 +83,8 @@ pnpm build
 
 ### Testing and Validation
 
+**After completing each task, make sure to run the appropriate command(s) listed below.**
+
 ```bash
 # Run all tests
 pnpm test

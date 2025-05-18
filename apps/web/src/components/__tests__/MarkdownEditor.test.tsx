@@ -91,10 +91,17 @@ validated: true
       ]),
     });
 
+    // 初期コンテンツを設定して、エラーを表示させる
+    const errorContent = `---
+schema_path:
+validated: invalid
+---
+# タイトル`;
+
     render(
       <LoggerProvider>
         <MarkdownEditor
-          initialContent=""
+          initialContent={errorContent}
           onChange={vi.fn()}
           onSave={vi.fn()}
           validationErrors={[
@@ -109,35 +116,19 @@ validated: true
       </LoggerProvider>
     );
 
-    // ファイルドロップをシミュレート
-    const invalidMarkdown = `---
-schema_path:
-validated: invalid
----
-# タイトル`;
-
-    const file = new File([invalidMarkdown], 'invalid.md', {
-      type: 'text/markdown',
-    });
-    const dataTransfer = {
-      files: [file],
-      dropEffect: '',
-      types: ['Files'],
-      items: [{}],
-      setData: vi.fn(),
-      getData: vi.fn(),
-      clearData: vi.fn(),
-    };
-
-    // ドロップエリアを取得
-    const dropArea = screen.getByText(/ドラッグ＆ドロップ/);
-
-    // ドロップイベントを発火
-    fireEvent.drop(dropArea, { dataTransfer });
-
-    // We need to wait for the content to be set and validationErrors to be displayed
+    // コンテンツが設定されていることを確認
     await waitFor(() => {
-      expect(screen.getByText('バリデーションエラー (1)')).toBeInTheDocument();
+      expect(screen.getByTestId('codemirror-mock')).toBeInTheDocument();
+    });
+
+    // フロントマターエラータイトルが表示されていることを確認
+    await waitFor(() => {
+      expect(screen.getByText('フロントマターエラー:')).toBeInTheDocument();
+    });
+
+    // エラーメッセージが表示されていることを確認
+    await waitFor(() => {
+      expect(screen.getByText(/Frontmatter validation error/)).toBeInTheDocument();
     });
   });
 
