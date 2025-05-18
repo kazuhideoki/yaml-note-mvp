@@ -77,11 +77,7 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }));
 
   // ログイベントを記録する関数
-  const logEvent = (
-    level: LogLevel,
-    action: string,
-    details?: Record<string, unknown>
-  ) => {
+  const logEvent = (level: LogLevel, action: string, details?: Record<string, unknown>) => {
     const event: LogEvent = {
       timestamp: Date.now(),
       level,
@@ -147,7 +143,6 @@ export const LoggerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, 60000); // 1分ごと
 
     return () => clearInterval(saveInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events]);
 
   // コンテキスト値の作成

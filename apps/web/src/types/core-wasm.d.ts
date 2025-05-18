@@ -43,9 +43,4 @@ declare module 'core-wasm' {
    * YAML文字列をMarkdown文字列に変換する
    */
   export function yaml_to_md(yaml: string): string;
-
-  /**
-   * JSからのエラーメッセージをラップするためのコンバータ
-   */
-  export function error_to_js_value(error: any): string;
 }
