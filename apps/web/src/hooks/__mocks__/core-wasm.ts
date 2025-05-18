@@ -6,7 +6,14 @@ export function validate_yaml(yaml_str: string, _schema_str: string): string {
   if (yaml_str.includes('error')) {
     return JSON.stringify({
       success: false,
-      errors: [{ message: 'Mock validation error', line: 1, path: '' }],
+      errors: [
+        {
+          message: 'Mock validation error',
+          line: 1,
+          path: '',
+          code: 4, // ErrorCode.SchemaValidation
+        },
+      ],
     });
   }
   return JSON.stringify({ success: true, errors: [] });
@@ -21,6 +28,7 @@ export function parse_and_validate_frontmatter(md: string): string {
           message: 'Frontmatter validation error',
           line: 2,
           path: 'schema_path',
+          code: 3, // ErrorCode.FrontmatterValidation
         },
       ],
     });
