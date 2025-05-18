@@ -4,7 +4,7 @@
  * File System Access APIを使ったファイル操作に対応
  */
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { yaml } from '@codemirror/lang-yaml';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import { useYamlCore } from '../hooks/useYamlCore';
@@ -50,7 +50,8 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   const { wasmLoaded, compileSchema } = useYamlCore();
   const [isDirty, setIsDirty] = useState(false);
   const { log } = useLogger();
-  const editorRef = useRef<any>(null);
+  // CodeMirror インスタンスへの参照
+  const editorRef = useRef<ReactCodeMirrorRef | null>(null);
 
   // 初期スキーマが変更されたとき、内容を更新（保存されたスキーマの場合のみ）
   useEffect(() => {

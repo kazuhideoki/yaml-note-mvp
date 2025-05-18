@@ -4,7 +4,7 @@
  * File System Access APIを使ったファイル操作に対応
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import useValidator from '../hooks/useValidator';
@@ -52,7 +52,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   fileName = ''
 }) => {
   const [content, setContent] = useState<string>(initialContent);
-  const editorRef = useRef<any>(null);
+  // CodeMirror インスタンスへの参照
+  const editorRef = useRef<ReactCodeMirrorRef | null>(null);
   const { isValidating, clearErrors } = useValidator(content);
   const { log } = useLogger();
   const prevContentRef = useRef<string>('');
