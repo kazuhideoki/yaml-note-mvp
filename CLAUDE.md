@@ -8,13 +8,35 @@ YAML Note MVP is a browser-based note-taking application that uses YAML as its p
 
 The project uses a monorepo structure with Rust (compiled to WebAssembly) for core YAML validation functions, and React/TypeScript for the web interface. The application is designed to provide immediate error feedback while editing YAML notes.
 
+## Key Files and Components
+
+### Web App Structure
+
+- `apps/web/src/App.tsx` - Main application component
+- `apps/web/src/components/` - UI components
+  - `MarkdownEditor.tsx` - Markdown preview component
+  - `SchemaEditor.tsx` - YAML editor component with schema validation
+  - `ValidationBanner.tsx` - Component for displaying validation errors
+  - `EditorTabs.tsx` - Tab interface for switching between editor views
+  - `ValidationToggle.tsx` - Toggle control for enabling/disabling validation
+  - `ErrorBadge.tsx` - Component for displaying error indicators
+- `apps/web/src/hooks/` - React hooks
+  - `useValidator.ts` - Hook for YAML validation logic
+  - `useFileAccess.ts` - Hook for file system access
+  - `useLogger.ts` - Hook for accessing the logging system
+  - `useYamlCore.ts` - Hook for interfacing with the WASM module
+- `apps/web/src/contexts/` - React contexts
+  - `LoggerContext.tsx` - Context for centralized logging
+
 ## Key Architecture Components
 
 1. **Web App (React/TypeScript)**:
 
-   - UI with three panes: Raw YAML editor, error display, and Markdown preview
+   - UI with multiple views: Raw YAML editor, error display, and Markdown preview
+   - Editor tabs for switching between different edit modes
    - Built with React, Vite, and Tailwind CSS
    - Uses CodeMirror for YAML editing
+   - Comprehensive logging system with LoggerContext for tracking application events
 
 2. **Core WASM (Rust)**:
 
@@ -24,8 +46,15 @@ The project uses a monorepo structure with Rust (compiled to WebAssembly) for co
 
 3. **Schema Definitions**:
 
-- JSON Schema files (in YAML format) are located under `apps/web/public/schemas/`
-- Schema evolution is tracked via version control
+   - JSON Schema files (in YAML format) are located under `apps/web/public/schemas/`
+   - Schema evolution is tracked via version control
+
+4. **Logging System**:
+
+   - Centralized logging through the LoggerContext provider
+   - Structured logging with LogAction union type for type-safe log entries
+   - Component-level logging via useLogger hook
+   - Consistent log format for debugging and tracking user actions
 
 ## Common Commands
 
@@ -89,7 +118,13 @@ cargo clippy -- -D warnings
    - The development server will automatically reload on changes
 
 3. **Schema Changes**:
-   - Edit schema files in `packages/schemas/`
+
+   - Edit schema files in `apps/web/public/schemas/`
+
+4. **Logging System Usage**:
+   - Use the `useLogger()` hook in components to log actions and events
+   - Follow the LogAction union type pattern for creating log entries
+   - Log important UI interactions, validation events, and file operations
 
 ## Commenting Policy & Style Guide (TypeScript / Rust)
 
