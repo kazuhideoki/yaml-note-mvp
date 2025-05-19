@@ -25,6 +25,8 @@ jobs:
         run: pnpm lint
       - name: Run TypeScript check
         run: pnpm typecheck
+      - name: Run Prettier format check
+        run: pnpm format:check
 
   test-js:
     name: Test JavaScript/TypeScript
