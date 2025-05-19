@@ -1,7 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ErrorBadge from '../ErrorBadge';
-import { ValidationError, ErrorCode } from '../../hooks/validation-error.type';
+import {
+  ValidationError,
+  ErrorCode,
+  mapNumericToStringErrorCode,
+} from '../../hooks/validation-error.type';
 import { LoggerProvider } from '../../contexts/LoggerContext';
 
 describe('ErrorBadge', () => {
@@ -96,5 +100,23 @@ describe('ErrorBadge', () => {
     expect(screen.getByText(/フロントマターエラー: 必須フィールドがありません/)).toBeInTheDocument();
     expect(screen.queryByText(/スキーマ検証エラー: フィールドが必要です/)).not.toBeInTheDocument();
     expect(screen.getByText(/スキーマ構文エラー: 無効なスキーマです/)).toBeInTheDocument();
+  });
+
+  it('文字列コードでも黄色バッジが表示される', () => {
+    const stringCodeError: ValidationError = {
+      line: 3,
+      message: 'schema validation error',
+      path: '',
+      code: mapNumericToStringErrorCode('SchemaValidation'),
+    };
+
+    const { container } = render(
+      <LoggerProvider>
+        <ErrorBadge errors={[stringCodeError]} />
+      </LoggerProvider>
+    );
+
+    const badgeContainer = screen.getByText(/バリデーションエラー/).parentElement?.parentElement;
+    expect(badgeContainer?.className).toContain('bg-yellow-100');
   });
 });

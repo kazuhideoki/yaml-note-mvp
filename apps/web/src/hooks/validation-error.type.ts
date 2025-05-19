@@ -51,10 +51,31 @@ export interface ValidationResult {
  * @returns 対応するErrorCode列挙型の値
  */
 export function mapNumericToStringErrorCode(code: unknown): ErrorCode {
+  // 文字列の場合はそのままErrorCodeへマッピング
+  if (typeof code === 'string') {
+    switch (code) {
+      case ErrorCode.YamlParse:
+        return ErrorCode.YamlParse;
+      case ErrorCode.SchemaCompile:
+        return ErrorCode.SchemaCompile;
+      case ErrorCode.FrontmatterParse:
+        return ErrorCode.FrontmatterParse;
+      case ErrorCode.FrontmatterValidation:
+        return ErrorCode.FrontmatterValidation;
+      case ErrorCode.SchemaValidation:
+        return ErrorCode.SchemaValidation;
+      case ErrorCode.Unknown:
+        return ErrorCode.Unknown;
+      default:
+        return ErrorCode.Unknown;
+    }
+  }
+
+  // 数値以外は未知のエラーとして扱う
   if (typeof code !== 'number') {
     return ErrorCode.Unknown;
   }
-  
+
   switch (code) {
     case 0:
       return ErrorCode.YamlParse;
