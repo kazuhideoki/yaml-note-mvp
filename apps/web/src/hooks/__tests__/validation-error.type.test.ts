@@ -12,9 +12,7 @@ describe('mapNumericToStringErrorCode', () => {
   });
 
   it('文字列コードを正しく変換する', () => {
-    expect(mapNumericToStringErrorCode('SchemaValidation')).toBe(
-      ErrorCode.SchemaValidation
-    );
+    expect(mapNumericToStringErrorCode('SchemaValidation')).toBe(ErrorCode.SchemaValidation);
   });
 
   it('不正な入力は Unknown を返す', () => {

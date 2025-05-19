@@ -65,35 +65,38 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
       setVisible(true);
 
       // エラータイプを集計
-      const errorTypes = filteredErrors.reduce((acc: Record<ErrorType, number>, err) => {
-        let type: ErrorType;
-        switch (err.code) {
-          case ErrorCode.FrontmatterParse:
-          case ErrorCode.FrontmatterValidation:
-            type = 'frontmatter_error';
-            break;
-          case ErrorCode.SchemaValidation:
-            if (err.message.includes('required')) type = 'required_field';
-            else if (err.message.includes('type')) type = 'type_mismatch';
-            else if (err.message.includes('pattern')) type = 'pattern_mismatch';
-            else type = 'schema_error';
-            break;
-          case ErrorCode.SchemaCompile:
-            type = 'schema_error';
-            break;
-          default:
-            type = 'other';
+      const errorTypes = filteredErrors.reduce(
+        (acc: Record<ErrorType, number>, err) => {
+          let type: ErrorType;
+          switch (err.code) {
+            case ErrorCode.FrontmatterParse:
+            case ErrorCode.FrontmatterValidation:
+              type = 'frontmatter_error';
+              break;
+            case ErrorCode.SchemaValidation:
+              if (err.message.includes('required')) type = 'required_field';
+              else if (err.message.includes('type')) type = 'type_mismatch';
+              else if (err.message.includes('pattern')) type = 'pattern_mismatch';
+              else type = 'schema_error';
+              break;
+            case ErrorCode.SchemaCompile:
+              type = 'schema_error';
+              break;
+            default:
+              type = 'other';
+          }
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        },
+        {
+          frontmatter_error: 0,
+          schema_error: 0,
+          required_field: 0,
+          type_mismatch: 0,
+          pattern_mismatch: 0,
+          other: 0,
         }
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {
-        frontmatter_error: 0,
-        schema_error: 0,
-        required_field: 0,
-        type_mismatch: 0,
-        pattern_mismatch: 0,
-        other: 0,
-      });
+      );
 
       // 前回と異なるエラーセットの場合のみログを記録
       if (JSON.stringify(filteredErrors) !== JSON.stringify(prevErrorsRef.current)) {
@@ -128,7 +131,7 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
   const filteredErrors = validated
     ? errors
     : errors.filter(err => err.code !== ErrorCode.SchemaValidation);
-  
+
   // 表示されない場合は早期リターン
   if (!visible || filteredErrors.length === 0) {
     return null;
@@ -154,7 +157,11 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
       return 'bg-purple-100 border-purple-400 text-purple-700';
     }
     // フロントマターエラー（赤）
-    else if (type === 'frontmatter' || error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation) {
+    else if (
+      type === 'frontmatter' ||
+      error.code === ErrorCode.FrontmatterParse ||
+      error.code === ErrorCode.FrontmatterValidation
+    ) {
       return 'bg-red-100 border-red-400 text-red-700';
     }
     // スキーマ検証エラー（黄）
@@ -176,12 +183,11 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
     }
 
     // スキーマ構文エラー判定
-    const hasSchemaStructureError = errors.some(
-      error => error.code === ErrorCode.SchemaCompile
-    );
+    const hasSchemaStructureError = errors.some(error => error.code === ErrorCode.SchemaCompile);
 
     const hasFrontmatterError = errors.some(
-      error => error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation
+      error =>
+        error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation
     );
 
     const hasSchemaValidationError = errors.some(
@@ -224,12 +230,11 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
     }
 
     // スキーマ構文エラー判定
-    const hasSchemaStructureError = errors.some(
-      error => error.code === ErrorCode.SchemaCompile
-    );
+    const hasSchemaStructureError = errors.some(error => error.code === ErrorCode.SchemaCompile);
 
     const hasFrontmatterError = errors.some(
-      error => error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation
+      error =>
+        error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation
     );
 
     const hasSchemaValidationError = errors.some(
@@ -337,7 +342,7 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
     if (!validated && error.code === ErrorCode.SchemaValidation) {
       return null;
     }
-    
+
     return (
       <li
         key={`error-${index}-${error.line}`}
@@ -385,12 +390,11 @@ export const ErrorBadge: React.FC<ErrorBadgeProps> = ({
 
     // 標準の分類ロジック
     // スキーマ構文エラー
-    const schemaStructureErrors = errors.filter(
-      error => error.code === ErrorCode.SchemaCompile
-    );
+    const schemaStructureErrors = errors.filter(error => error.code === ErrorCode.SchemaCompile);
 
     const frontmatterErrors = errors.filter(
-      error => error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation
+      error =>
+        error.code === ErrorCode.FrontmatterParse || error.code === ErrorCode.FrontmatterValidation
     );
 
     const schemaValidationErrors = errors.filter(

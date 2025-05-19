@@ -46,7 +46,7 @@ export interface ValidationResult {
 
 /**
  * Rust/WASMのエラーコードをTypeScriptの文字列エラーコードに変換
- * 
+ *
  * @param code - Rust側から返されるエラーコード（型は不明）
  * @returns 対応するErrorCode列挙型の値
  */

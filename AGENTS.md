@@ -115,6 +115,9 @@ pnpm typecheck
 # Run linters
 pnpm lint
 
+# Run formatting checks
+pnpm format
+
 # Run Rust tests for core-wasm
 cargo test -p core-wasm
 

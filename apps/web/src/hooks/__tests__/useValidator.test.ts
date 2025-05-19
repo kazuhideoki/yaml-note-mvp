@@ -3,7 +3,7 @@ import { describe, test, expect, it } from 'vitest';
 describe('useValidator', () => {
   // 完全なテストはmemoryリークのエラーとなってしまうため一部省略
   it('useValidator の一部は下記のようにmemoryリークのエラーとなってしまうので省略');
-  
+
   // トグル関数に関するテストは下記のようにモックだけすれば省略できる
   test('toggleValidation は検証の有効/無効を切り替える機能を提供する', () => {
     // 実際の実装はmemoryリークを避けるためここでは検証せず、手動テストで確認

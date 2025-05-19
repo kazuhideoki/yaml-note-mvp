@@ -30,20 +30,18 @@ const App: React.FC = () => {
   const [editedSchemaContent, setEditedSchemaContent] = useState<string>('');
   const [schemaPath, setSchemaPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('note');
-  
+
   // ファイル操作機能
-  const {
-    markdownFile,
-    schemaFile,
-    openFile,
-    saveFile,
-    saveFileAs,
-    updateContent,
-    isDirty
-  } = useFileAccess();
+  const { markdownFile, schemaFile, openFile, saveFile, saveFileAs, updateContent, isDirty } =
+    useFileAccess();
 
   // バリデーション状態
-  const { errors, schemaPath: validatorSchemaPath, validated, toggleValidation } = useValidator(markdownContent);
+  const {
+    errors,
+    schemaPath: validatorSchemaPath,
+    validated,
+    toggleValidation,
+  } = useValidator(markdownContent);
 
   // スキーマロード関数
   const loadSchema = useCallback(
@@ -71,41 +69,56 @@ const App: React.FC = () => {
   }, [validatorSchemaPath, loadSchema, schemaPath]);
 
   // マークダウン変更ハンドラ
-  const handleMarkdownChange = useCallback((content: string) => {
-    setMarkdownContent(content);
-    updateContent('markdown', content);
-  }, [updateContent]);
-  
+  const handleMarkdownChange = useCallback(
+    (content: string) => {
+      setMarkdownContent(content);
+      updateContent('markdown', content);
+    },
+    [updateContent]
+  );
+
   // バリデーション状態トグル処理
-  const handleValidationToggle = useCallback((newState: boolean) => {
-    const updatedMarkdown = toggleValidation(newState);
-    if (updatedMarkdown) {
-      setMarkdownContent(updatedMarkdown);
-      updateContent('markdown', updatedMarkdown);
-    }
-  }, [toggleValidation, updateContent]);
+  const handleValidationToggle = useCallback(
+    (newState: boolean) => {
+      const updatedMarkdown = toggleValidation(newState);
+      if (updatedMarkdown) {
+        setMarkdownContent(updatedMarkdown);
+        updateContent('markdown', updatedMarkdown);
+      }
+    },
+    [toggleValidation, updateContent]
+  );
 
   // スキーマ変更ハンドラ
-  const handleSchemaChange = useCallback((content: string) => {
-    setEditedSchemaContent(content);
-    updateContent('schema', content);
-  }, [updateContent]);
+  const handleSchemaChange = useCallback(
+    (content: string) => {
+      setEditedSchemaContent(content);
+      updateContent('schema', content);
+    },
+    [updateContent]
+  );
 
   // マークダウン保存ハンドラ
-  const saveMarkdown = useCallback(async (content: string) => {
-    const success = await saveFile('markdown', content);
-    if (success) {
-      setMarkdownContent(content);
-    }
-  }, [saveFile]);
+  const saveMarkdown = useCallback(
+    async (content: string) => {
+      const success = await saveFile('markdown', content);
+      if (success) {
+        setMarkdownContent(content);
+      }
+    },
+    [saveFile]
+  );
 
   // スキーマ保存ハンドラ
-  const saveSchema = useCallback(async (_path: string, content: string) => {
-    const success = await saveFile('schema', content);
-    if (success) {
-      setEditedSchemaContent(content);
-    }
-  }, [saveFile]);
+  const saveSchema = useCallback(
+    async (_path: string, content: string) => {
+      const success = await saveFile('schema', content);
+      if (success) {
+        setEditedSchemaContent(content);
+      }
+    },
+    [saveFile]
+  );
 
   return (
     <LoggerProvider>
@@ -152,7 +165,7 @@ const App: React.FC = () => {
             >
               名前を付けて保存
             </button>
-            
+
             {/* バリデーショントグル */}
             <ValidationToggle
               isValidated={validated}
@@ -169,8 +182,8 @@ const App: React.FC = () => {
               onTabChange={setActiveTab}
               markdownDirty={isDirty('markdown')}
               schemaDirty={isDirty('schema')}
-              markdownFileName={markdownFile.name || "Note.md"}
-              schemaFileName={schemaFile.name || "Schema.yaml"}
+              markdownFileName={markdownFile.name || 'Note.md'}
+              schemaFileName={schemaFile.name || 'Schema.yaml'}
             />
 
             <div className="flex-grow">
