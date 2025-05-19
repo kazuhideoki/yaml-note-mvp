@@ -18,7 +18,7 @@
    - Cargo ワークスペースへ組み込み
 2. **既存 Web アプリの統合**
    - `apps/web` のビルド成果物を Tauri が読み込む構成にする
-   - 開発・ビルドとも `pnpm tauri dev` / `tauri build` で完結させる
+   - 開発・ビルドとも `pnpm tauri dev` / `pnpm tauri build` で完結させる
 3. **ファイル操作ロジックの置き換え**
    - File System Access API を Tauri の `@tauri-apps/api` 相当へ置換
    - 必要に応じて Rust 側コマンドを定義
@@ -31,7 +31,7 @@
    - ファイルメニュー（新規/開く/保存）のみ提供
    - 画面デザインは Web 版を流用
 7. **配布スクリプトの整備**
-   - `tauri build` で各 OS 用バイナリを生成し、GitHub Releases へアップロード
+   - `pnpm tauri build` で macOS 用バイナリを生成し、GitHub Releases へアップロード
 8. **ドキュメント更新**
    - README と開発向けドキュメントにデスクトップ版手順を追記
 
@@ -45,26 +45,95 @@ yaml-note-mvp/
 │  └─ web/            # 既存 React アプリ
 ├─ packages/
 │  └─ core-wasm/      # WASM + ライブラリ化するコア
+│  └─ core-lib/       # 新規共通ライブラリ
 ├─ src-tauri/         # 新規 Tauri プロジェクト
-└─ Cargo.toml         # ワークスペースに tauri_app クレート追加
+└─ Cargo.toml         # ワークスペースに tauri_app と core-lib クレート追加
 ```
 
 ### 3.2 フェーズ別ロードマップ
 
-- **S0: Tauri 初期化** – `tauri init` 実行、ワークスペース設定
-- **S1: Web アプリ連携** – `distDir` を `../apps/web/dist` に設定
-- **S2: ファイル API 移行** – `useFileAccess.ts` を Tauri API へ書き換え
-- **S3: コアライブラリ分割** – Rust ライブラリとして再構成、WASM と共有
-- **S4: ビルド・テスト更新** – CI で `tauri build` / `cargo test` を実行
-- **S5: UI 最小実装** – メニュー周りの追加、ウィンドウ設定
-- **S6: 配布フロー整備** – GitHub Releases へのバイナリアップロード
-- **S7: ドキュメント整備** – README ほかを更新
+| フェーズ | 満たすべき機能 | 完了条件 | やらないこと |
+|---------|-------------|---------|-----------|
+| **S0: Tauri 初期化** | ・Tauri プロジェクト基盤構築<br>・Cargo ワークスペース統合 | ・`tauri.conf.json` の作成<br>・Cargo.toml にワークスペースメンバー追加<br>・`cargo build` が通ること | ・UI 構築<br>・既存機能の移植 |
+| **S1: Web アプリ連携** | ・Web ビルド成果物の読み込み<br>・開発サーバー連携 | ・`pnpm tauri dev` で既存画面表示<br>・`distDir` 設定によるビルド成果物読み込み<br>・ホットリロード動作確認 | ・ネイティブ機能追加<br>・コンポーネント改変 |
+| **S2: ファイル API 移行** | ・ファイル操作 API 抽象化<br>・Tauri API 実装 | ・ファイル開く/保存機能の動作<br>・環境検出による API 切替<br>・単体テスト作成・実行 | ・UI 変更<br>・他の機能移行 |
+| **S3: コアライブラリ分割** | ・共通ライブラリ作成<br>・WASM と直接 API の両対応 | ・`core-lib` クレート作成<br>・`core-wasm` からの依存<br>・Tauri からの直接呼び出し<br>・全テスト成功 | ・パフォーマンス最適化<br>・APIの大幅変更 |
+| **S4: ビルド・テスト更新** | ・CI への Tauri テスト追加<br>・開発フロー統合 | ・GitHub Actions 更新<br>・`tauri build` が CI で成功<br>・テストカバレッジ維持 | ・クロスプラットフォームビルド<br>・テスト自動化の高度化 |
+| **S5: UI 最小実装** | ・ネイティブメニュー<br>・基本ウィンドウ設定 | ・ファイルメニュー動作<br>・アプリアイコン設定<br>・ウィンドウサイズ・タイトル設定 | ・カスタム UI コンポーネント<br>・複雑なネイティブ連携 |
+| **S6: 配布フロー整備** | ・バイナリ生成<br>・GitHub Releases 連携 | ・macOS 用バイナリ作成<br>・GitHub Releases へのアップロード手順<br>・インストール手順の検証 | ・自動更新機能<br>・署名検証<br>・Windows/Linux ビルド |
+| **S7: ドキュメント整備** | ・開発者向け文書<br>・ユーザー向け文書 | ・README 更新<br>・インストール手順<br>・開発環境セットアップ文書 | ・詳細なチュートリアル<br>・API ドキュメント自動生成 |
+
+### 3.3 開発環境・ビルドプロセス
+
+- **開発環境要件**
+  - Node.js 16.x 以上、Rust 1.60 以上
+  - macOS: XCode コマンドラインツール（Tauri が macOS ネイティブバイナリをビルドする際に必要）
+  - 初期対応は macOS のみ、後にWindows/Linux対応を検討
+  - `pnpm install` で全依存関係をインストール（Tauri含む）
+
+- **ビルドスクリプト統合**
+  - `package.json` に以下のスクリプトを追加
+    ```json
+    "scripts": {
+      "tauri": "tauri",
+      "tauri:dev": "tauri dev",
+      "tauri:build": "tauri build",
+      "dev:desktop": "pnpm tauri:dev"
+    }
+    ```
+  - `scripts/dev-start.sh` を更新し、ビルドモード選択オプションを追加
+
+### 3.4 コアライブラリ分割戦略
+
+- **共通ライブラリ `core-lib` の作成**
+  - `packages/core-lib/` に基本的なYAML処理・バリデーション機能を抽出
+  - `core-wasm` は Web 向けに `core-lib` をラップし WASM インターフェースを提供
+  - `tauri_app` は直接 `core-lib` のRust APIを呼び出す構成
+  - エラーハンドリングとデータ型定義を `core-lib` で共通化
+
+- **パフォーマンス分岐**
+  - デスクトップ版では `tokio` などを活用したマルチスレッド処理を実装
+  - Web版では現状のシングルスレッド処理を維持
+  - フィーチャーフラグで環境別の機能を切り替え
+
+### 3.5 テスト戦略
+
+- **各フェーズでのテスト実行**
+  - フェーズ完了ごとに `pnpm test` および `cargo test -p core-lib -p tauri_app` を実行
+  - 移行による機能の劣化がないことを確認
+
+- **CI拡張**
+  - GitHub Actions に Tauri ビルドとテストステップを追加
+  - クロスプラットフォームビルド検証（将来的な対応）
+
+- **テストの種類**
+  - 単体テスト: Rust コードの機能検証
+  - 統合テスト: Tauri API と UI の連携検証
+  - E2Eテスト: 主要ユースケースの検証（可能なら自動化）
+  - 環境依存部分のモック化: ファイルアクセスなどの環境依存機能はモックを使い分けてテスト
+
+### 3.6 フォールバック対応
+
+- **ブラウザでの継続利用**
+  - Web版とデスクトップ版のコードベースを分離せず、環境検出で適切な実装を選択
+  - `useFileAccess.ts` 内で Tauri 環境検出と適切な API 選択を実装
+
+  ```typescript
+  const isTauriEnvironment = () => Boolean(window.__TAURI__);
+  ```
+
+- **API抽象化**
+  - ファイルアクセス等の機能を抽象インターフェースで定義
+  - 環境に応じた実装クラスを注入（Strategy パターン）
+  - 長期的には React Context で環境依存サービスを提供
 
 ## 4. 成果物
 
-- マルチプラットフォーム対応のデスクトップアプリ
+- マルチプラットフォーム対応のデスクトップアプリ（初期は macOS のみ）
 - 統合されたビルド & CI フロー
 - 更新されたドキュメント
+- コアロジックの共通ライブラリ
+- 環境検出・抽象化レイヤー
 
 ## 5. この移行でやらないこと
 
@@ -72,4 +141,5 @@ yaml-note-mvp/
 - ネットワーク同期やクラウド機能
 - 大規模な UI リニューアル
 - モバイル (iOS/Android) 向けビルド
-
+- 現段階では Windows/Linux 向けの最適化
+- 既存の Web 版の廃止（両環境で継続して使用可能に）
