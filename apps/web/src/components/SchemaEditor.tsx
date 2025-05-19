@@ -110,7 +110,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
     log('info', 'schema_saved', {
       schemaPath,
       hasErrors: errors.length > 0,
-      fileName: fileName || 'schema.yaml'
+      fileName: fileName || 'schema.yaml',
     });
   }, [content, onSave, errors.length, schemaPath, fileName, log]);
 
@@ -169,14 +169,18 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
       event.preventDefault();
 
       // File System Access API のファイルハンドルを試みる
-      if ('getAsFileSystemHandle' in event.dataTransfer.items[0] && 
-          typeof event.dataTransfer.items[0].getAsFileSystemHandle === 'function') {
+      if (
+        'getAsFileSystemHandle' in event.dataTransfer.items[0] &&
+        typeof event.dataTransfer.items[0].getAsFileSystemHandle === 'function'
+      ) {
         try {
-          const handle = await (event.dataTransfer.items[0].getAsFileSystemHandle as () => Promise<FileSystemHandle>)() as FileSystemFileHandle;
-          
+          const handle = (await (
+            event.dataTransfer.items[0].getAsFileSystemHandle as () => Promise<FileSystemHandle>
+          )()) as FileSystemFileHandle;
+
           if (handle && handle.kind === 'file') {
             const file = await handle.getFile();
-            
+
             if (file.name.endsWith('.yaml') || file.name.endsWith('.yml')) {
               const fileContent = await file.text();
               setContent(fileContent);
@@ -184,14 +188,14 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
               if (onChange) {
                 onChange(fileContent);
               }
-              
+
               // getAsFileSystemHandleを使用した場合のログ
               log('info', 'schema_file_loaded_with_handle', {
                 fileName: file.name,
                 fileSize: file.size,
-                handleAvailable: true
+                handleAvailable: true,
               });
-              
+
               return; // 成功したのでここで終了
             }
           }
@@ -200,7 +204,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
           // 従来のテキスト読み込みにフォールバック（下記で処理）
         }
       }
-      
+
       // 従来のファイル読み込み方法
       const file = event.dataTransfer.files[0];
       if (file && (file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
@@ -217,7 +221,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
           log('info', 'schema_file_loaded', {
             fileName: file.name,
             fileSize: file.size,
-            handleAvailable: false
+            handleAvailable: false,
           });
         };
         reader.readAsText(file);
@@ -237,9 +241,7 @@ export const SchemaEditor: React.FC<SchemaEditorProps> = ({
   return (
     <div className="w-full h-full flex flex-col" onDragOver={handleDragOver} onDrop={handleDrop}>
       <div className="flex justify-between items-center p-2 bg-gray-100">
-        <span className="text-sm text-gray-700">
-          {fileName ? fileName : schemaPath}
-        </span>
+        <span className="text-sm text-gray-700">{fileName ? fileName : schemaPath}</span>
         <button
           className={`px-3 py-1 rounded text-sm ${
             isDirty ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'

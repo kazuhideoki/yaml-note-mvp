@@ -7,13 +7,13 @@
 interface FileSystemHandle {
   readonly kind: 'file' | 'directory';
   readonly name: string;
-  
+
   isSameEntry(other: FileSystemHandle): Promise<boolean>;
 }
 
 interface FileSystemFileHandle extends FileSystemHandle {
   readonly kind: 'file';
-  
+
   getFile(): Promise<File>;
   createWritable(options?: FileSystemCreateWritableOptions): Promise<FileSystemWritableFileStream>;
   queryPermission(descriptor: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;

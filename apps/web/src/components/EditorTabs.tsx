@@ -34,7 +34,7 @@ export interface EditorTabsProps {
 
 /**
  * エディタタブコンポーネント
- * 
+ *
  * @component
  * @param {EditorTabsProps} props - コンポーネントのプロパティ
  * @returns {JSX.Element} タブUIコンポーネント
@@ -45,23 +45,26 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
   onTabChange,
   markdownDirty = false,
   schemaDirty = false,
-  markdownFileName = "Note.md",
-  schemaFileName = "Schema.yaml"
+  markdownFileName = 'Note.md',
+  schemaFileName = 'Schema.yaml',
 }) => {
-  const handleTabClick = useCallback((tab: TabType) => {
-    onTabChange(tab);
-  }, [onTabChange]);
+  const handleTabClick = useCallback(
+    (tab: TabType) => {
+      onTabChange(tab);
+    },
+    [onTabChange]
+  );
 
   // ファイル名が長すぎる場合、表示名を短縮
   const getDisplayFileName = (fileName: string, maxLength = 20) => {
     if (fileName.length <= maxLength) return fileName;
     const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
     const name = fileName.substring(0, fileName.length - (extension ? extension.length + 1 : 0));
-    
+
     if (name.length <= maxLength - 3 - (extension ? extension.length + 1 : 0)) {
       return fileName;
     }
-    
+
     return `${name.substring(0, maxLength - 3 - (extension ? extension.length + 1 : 0))}...${extension ? `.${extension}` : ''}`;
   };
 
@@ -71,29 +74,29 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
         <li className="mr-1">
           <button
             className={`py-2 px-4 ${
-              activeTab === "note"
-                ? "bg-white border-b-2 border-blue-500 font-medium"
-                : "bg-gray-100 hover:bg-gray-200"
+              activeTab === 'note'
+                ? 'bg-white border-b-2 border-blue-500 font-medium'
+                : 'bg-gray-100 hover:bg-gray-200'
             }`}
-            onClick={() => handleTabClick("note")}
+            onClick={() => handleTabClick('note')}
             title={markdownFileName}
           >
-            {getDisplayFileName(markdownFileName)} {markdownDirty && "*"}
+            {getDisplayFileName(markdownFileName)} {markdownDirty && '*'}
           </button>
         </li>
         <li>
           <button
             className={`py-2 px-4 ${
-              activeTab === "schema"
-                ? "bg-white border-b-2 border-blue-500 font-medium"
-                : "bg-gray-100 hover:bg-gray-200"
-            } ${!currentSchemaPath ? "opacity-50 cursor-not-allowed" : ""}`}
-            onClick={() => currentSchemaPath && handleTabClick("schema")}
+              activeTab === 'schema'
+                ? 'bg-white border-b-2 border-blue-500 font-medium'
+                : 'bg-gray-100 hover:bg-gray-200'
+            } ${!currentSchemaPath ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => currentSchemaPath && handleTabClick('schema')}
             disabled={!currentSchemaPath}
-            title={!currentSchemaPath ? "スキーマパスが設定されていません" : schemaFileName}
+            title={!currentSchemaPath ? 'スキーマパスが設定されていません' : schemaFileName}
           >
-            {currentSchemaPath ? getDisplayFileName(schemaFileName) : "Schema.yaml (未設定)"} 
-            {schemaDirty && "*"}
+            {currentSchemaPath ? getDisplayFileName(schemaFileName) : 'Schema.yaml (未設定)'}
+            {schemaDirty && '*'}
           </button>
         </li>
       </ul>

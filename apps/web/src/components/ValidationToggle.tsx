@@ -22,7 +22,7 @@ export interface ValidationToggleProps {
 export const ValidationToggle: React.FC<ValidationToggleProps> = ({
   isValidated,
   onToggle,
-  isDisabled = false
+  isDisabled = false,
 }) => {
   const { log } = useLogger();
 
@@ -36,7 +36,7 @@ export const ValidationToggle: React.FC<ValidationToggleProps> = ({
     // ログにイベントを記録
     log('info', 'validation_toggled', {
       newState,
-      action: newState ? 'enabled' : 'disabled'
+      action: newState ? 'enabled' : 'disabled',
     });
   }, [isValidated, onToggle, log]);
 
